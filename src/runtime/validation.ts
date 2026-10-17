@@ -51,7 +51,7 @@ export const slotOccupantChangedPayloadSchema = z.object({
   occupant: occupantSchema.nullable(),
 });
 
-export const frnlEventPayloadSchema = z.discriminatedUnion('type', [
+export const frnlEventSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('entity.stateChanged'), payload: entityStateChangedPayloadSchema }),
   z.object({ type: z.literal('entity.propertyChanged'), payload: entityPropertyChangedPayloadSchema }),
   z.object({ type: z.literal('slot.propertyChanged'), payload: slotPropertyChangedPayloadSchema }),
@@ -62,7 +62,8 @@ export type EntityKind = z.infer<typeof entityKindSchema>;
 export type EntityState = z.infer<typeof entityStateSchema>;
 export type SlotState = z.infer<typeof slotStateSchema>;
 export type Occupant = z.infer<typeof occupantSchema>;
-export type FrnlEventPayload = z.infer<typeof frnlEventPayloadSchema>;
+export type FrnlEventPayload = z.infer<typeof frnlEventSchema>;
+export type FrnlEvent = z.infer<typeof frnlEventSchema>;
 
 export function parseFrnlInput<T extends z.ZodType>(schema: T, input: unknown): z.infer<T> {
   return schema.parse(input);
