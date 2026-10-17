@@ -13,6 +13,8 @@ FRNL-TS defines the semantic building blocks for frontend UI systems.
     └── UI Composite
         ├── Slots
         │   └── UI Primitive | UI Composite
+        │       ├── Slot Properties
+        │       └── Slot Events
         ├── Properties
         ├── States
         └── Flows
@@ -41,6 +43,19 @@ A Composite owns:
 - Flows
 
 A Composite does not own Visual Assets. It can group and coordinate entities whose visual representation remains owned by the contained UI Primitives.
+
+## Slots
+
+A Slot is a live, addressable boundary for one UI entity.
+
+A Slot may contain either a UI Primitive or another UI Composite. The Slot itself owns:
+
+- Slot Properties for layout/relationship adjustment
+- Slot Events for occupant and lifecycle observation
+
+Slot Properties can be overridable and modulatable. Modulatable Slot Properties can use FRNL Curves and the same Attack/Sustain/Release temporal semantics as other properties.
+
+A Slot's occupant can be replaced while the containing UI is actively rendering. The Slot's identity, address, Slot Properties, and Slot Event interface remain stable across replacement.
 
 ## Recursive composition
 
@@ -85,24 +100,17 @@ A UI Composite may define named States, using the same Attack, Sustain, Release 
 
 Composite States do not own Visual Assets. They can represent group-level semantic configuration and coordinate properties or child-state changes. Visual changes remain owned by the affected UI Primitives.
 
+Composite States may also change Slot Properties, allowing group states to alter or animate child layout relationships without introducing Composite Visual Assets.
+
 ## Composite flows
 
 Flows belong to UI Composites and describe coordination between events, actions, state changes, data, and external functions.
 
-A Primitive owns and emits its Events. A Composite can consume those Events in a Flow and coordinate what happens next.
+A Primitive owns and emits its Events. Slots own Slot Events. A Composite can consume either kind of event in a Flow and coordinate what happens next.
 
-For example:
+Slot Events include State Changed and Occupant Changed.
 
-    Page.form.submit.click
-        ↓
-    validate
-        ↓
-    Form -> submitting State
-        ↓
-    invoke external function
-        ↓
-    success -> success State
-    failure -> error State
+Flows may also change Slot occupants, Slot Properties, and repeatable Slot collection membership at runtime.
 
 Flows are the frontend-level analogue of orchestration: they coordinate existing UI entities and external operations rather than embedding application business logic into Visual Assets or primitive rendering.
 
@@ -115,5 +123,7 @@ A Curve has a canonical one-second domain. Curves do not own playback duration.
 - Sustain has no duration.
 - During Sustain, property curves loop over their one-second domain.
 - During Attack and Release, the one-second curve is stretched or compressed to the phase duration.
+
+This temporal model applies to any modulatable property, including applicable Slot Properties.
 
 State does not own a timeline duration. Phase execution determines temporal interpretation.
