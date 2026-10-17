@@ -53,3 +53,9 @@ For a Composite, a State may therefore affect Composite Properties or coordinate
 A Slot Property can participate in the same state/curve system, allowing a Composite State to alter or animate layout relationships without making the Composite itself a Visual Asset owner.
 
 The property remains data; an Event represents an occurrence that can read or modify it; a Flow can coordinate those changes.
+
+## Runtime validation
+
+FrnlTS uses **Zod** as the default runtime validation mechanism at semantic input boundaries. TypeScript types describe compile-time contracts; Zod validates runtime data before it enters the framework.
+
+Injected property values and property mutation payloads must pass the applicable Zod schema. Invalid runtime input is rejected rather than being silently stored.
