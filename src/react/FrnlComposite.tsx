@@ -1,16 +1,18 @@
-import { useEffect, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import type { StoreApi } from 'zustand/vanilla';
 import { useStore } from 'zustand';
-import type { FrnlState } from '../runtime/store.js';
+import type { FrnlState, EntityKind } from '../runtime/store.js';
 import { compositePropsSchema, slotPropsSchema } from './validation.js';
 
 export interface FrnlSlotProps {
   id: string;
   address: string;
   occupantId: string;
-  occupantKind: 'primitive' | 'composite';
+  occupantKind: EntityKind;
   occupants: Record<string, ReactNode>;
   properties?: Record<string, unknown>;
+  className?: string;
+  style?: CSSProperties;
   store: StoreApi<FrnlState>;
 }
 
@@ -21,10 +23,19 @@ export function FrnlSlot({
   occupantKind,
   occupants,
   properties = {},
+  className,
+  style,
   store,
 }: FrnlSlotProps) {
-  slotPropsSchema.parse({ id, address, occupantId, occupantKind, occupants, properties, store });
-  const slot = useStore(store, (current) => current.slots[id]);
+  slotPropsSchema.parse({
+    id,
+    address,
+    occupantId,
+    occupantKind,
+    occupants,
+    properties,
+    store,
+  });
 
   useEffect(() => {
     store.getState().registerSlot(id, {
@@ -34,21 +45,27 @@ export function FrnlSlot({
       occupantKind,
       properties,
     });
-  }, [id, address, occupantId, occupantKind, properties, store]);
+  }, [id, address, store]);
 
+  const slot = useStore(store, (current) => current.slots[id]);
   const effectiveProperties = slot?.properties ?? properties;
+  const activeOccupantId = slot?.occupantId ?? occupantId;
+  const renderedOccupant = occupants[activeOccupantId] ?? null;
 
   return (
     <div
       data-frnl-kind="slot"
       data-frnl-slot-id={id}
-      data-frnl-address={address}
+      data-frnl-address={slot?.address ?? address}
+      data-frnl-occupant-id={activeOccupantId}
+      className={className}
       style={{
         position: 'relative',
+        ...style,
         ...((effectiveProperties.style as CSSProperties | undefined) ?? {}),
       }}
     >
-      {occupants[slot?.occupantId ?? occupantId] ?? null}
+      {renderedOccupant}
     </div>
   );
 }
@@ -72,8 +89,17 @@ export function FrnlComposite({
   style,
   store,
 }: FrnlCompositeProps) {
-  compositePropsSchema.parse({ id, state, properties, slots, className, style, store });
-  const entity = useStore(store, (current) => current.entities[id]);
+  compositePropsSchema.parse({
+    id,
+    state,
+    properties,
+    slots,
+    className,
+    style,
+    store,
+  });
+
+  const registeredRef = useRef<string | null>(null);
 
   useEffect(() => {
     store.getState().registerEntity(id, {
@@ -81,7 +107,19 @@ export function FrnlComposite({
       state,
       properties,
     });
-  }, [id, state, properties, store]);
+    registeredRef.current = id;
+  }, [id, store]);
+
+  useEffect(() => {
+    if (registeredRef.current === id) {
+      const current = store.getState().entities[id];
+      if (current && current.state !== state) {
+        store.getState().setEntityState(id, state);
+      }
+    }
+  }, [id, state, store]);
+
+  const entity = useStore(store, (current) => current.entities[id]);
 
   return (
     <div

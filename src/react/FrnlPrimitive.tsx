@@ -1,4 +1,4 @@
-import { useEffect, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import type React from 'react';
 import type { StoreApi } from 'zustand/vanilla';
 import { useStore } from 'zustand';
@@ -30,17 +30,45 @@ export function FrnlPrimitive({
   as: Component = 'div',
   hostProps = {},
 }: FrnlPrimitiveProps) {
-  primitivePropsSchema.parse({ id, bounds, state, properties, children, className, style, store, as: Component, hostProps });
-  const entity = useStore(store, (current) => current.entities[id]);
+  // Validate props at runtime boundary
+  primitivePropsSchema.parse({
+    id,
+    bounds,
+    state,
+    properties,
+    children,
+    className,
+    style,
+    store,
+    as: Component,
+    hostProps,
+  });
 
+  const registeredRef = useRef<string | null>(null);
+
+  // Register entity on mount or when id/store changes
   useEffect(() => {
     store.getState().registerEntity(id, {
       kind: 'primitive',
       state,
       properties,
+      bounds,
     });
-  }, [id, state, properties, store]);
+    registeredRef.current = id;
+  }, [id, store]);
 
+  // Synchronize state prop changes to store if different
+  useEffect(() => {
+    if (registeredRef.current === id) {
+      const current = store.getState().entities[id];
+      if (current && current.state !== state) {
+        store.getState().setEntityState(id, state);
+      }
+    }
+  }, [id, state, store]);
+
+  // Subscribe to live entity state in store
+  const entity = useStore(store, (current) => current.entities[id]);
   const effectiveState = entity?.state ?? state;
   const effectiveProperties = entity?.properties ?? properties;
 

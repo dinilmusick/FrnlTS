@@ -1,4 +1,11 @@
 export { createFrnlStore } from './runtime/store.js';
-export type { EntityKind, EntityState, SlotState, FrnlState } from './runtime/store.js';
-export * from './react/index.js';
+export type {
+  EntityKind,
+  EntityState,
+  SlotState,
+  SlotCollectionState,
+  FrnlState,
+  FrnlStore,
+  FrnlEvent,
+} from './runtime/store.js';
 export * from './runtime/validation.js';
