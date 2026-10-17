@@ -2,6 +2,7 @@ import { useEffect, type CSSProperties, type ReactNode } from 'react';
 import type { StoreApi } from 'zustand/vanilla';
 import { useStore } from 'zustand';
 import type { FrnlState } from '../runtime/store.js';
+import { compositePropsSchema, slotPropsSchema } from './validation.js';
 
 export interface FrnlSlotProps {
   id: string;
@@ -22,6 +23,7 @@ export function FrnlSlot({
   properties = {},
   store,
 }: FrnlSlotProps {
+  slotPropsSchema.parse({ id, address, occupantId, occupantKind, occupants, properties, store });
   const slot = useStore(store, (current) => current.slots[id]);
 
   useEffect(() => {
@@ -70,6 +72,7 @@ export function FrnlComposite({
   style,
   store,
 }: FrnlCompositeProps) {
+  compositePropsSchema.parse({ id, state, properties, slots, className, style, store });
   const entity = useStore(store, (current) => current.entities[id]);
 
   useEffect(() => {
