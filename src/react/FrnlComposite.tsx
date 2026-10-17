@@ -22,7 +22,7 @@ export function FrnlSlot({
   occupants,
   properties = {},
   store,
-}: FrnlSlotProps {
+}: FrnlSlotProps) {
   slotPropsSchema.parse({ id, address, occupantId, occupantKind, occupants, properties, store });
   const slot = useStore(store, (current) => current.slots[id]);
 
