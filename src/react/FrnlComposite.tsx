@@ -8,7 +8,7 @@ export interface FrnlSlotProps {
   address: string;
   occupantId: string;
   occupantKind: 'primitive' | 'composite';
-  children: ReactNode;
+  occupants: Record<string, ReactNode>;
   properties?: Record<string, unknown>;
   store: StoreApi<FrnlState>;
 }
@@ -18,10 +18,10 @@ export function FrnlSlot({
   address,
   occupantId,
   occupantKind,
-  children,
+  occupants,
   properties = {},
   store,
-}: FrnlSlotProps) {
+}: FrnlSlotProps {
   const slot = useStore(store, (current) => current.slots[id]);
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export function FrnlSlot({
         ...((effectiveProperties.style as CSSProperties | undefined) ?? {}),
       }}
     >
-      {children}
+      {occupants[slot?.occupantId ?? occupantId] ?? null}
     </div>
   );
 }
