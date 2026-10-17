@@ -127,3 +127,21 @@ A Curve has a canonical one-second domain. Curves do not own playback duration.
 This temporal model applies to any modulatable property, including applicable Slot Properties.
 
 State does not own a timeline duration. Phase execution determines temporal interpretation.
+
+## Runtime validation boundary
+
+FrnlTS uses **Zod as a default runtime validation layer**. TypeScript provides compile-time types, while Zod validates runtime values entering semantic framework assets and state boundaries.
+
+The default rule is:
+
+    injected input
+        ↓
+      Zod schema
+        ↓
+    validated semantic value
+        ↓
+    Zustand / React asset / Flow / Event
+
+This applies to React asset inputs, Zustand store mutations, injected payloads, Slot occupants, property updates, Flow inputs, and event payloads. Framework-defined event payloads are validated before emission.
+
+Schemas are part of the semantic contract; renderer-specific validation mechanisms do not replace the FrnlTS validation boundary.
