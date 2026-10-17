@@ -264,3 +264,9 @@ Because Slots establish a stable hierarchy, Composite Flows can address containe
     Page.content.occupantChanged
 
 These addresses are semantic references used by the Composite coordination model. They do not require a renderer-specific event or DOM model.
+
+## Runtime validation
+
+Slot inputs and runtime Slot mutations use **Zod** validation. Slot identity, address, occupant descriptors, Slot Properties, and Slot Event payloads are validated at their framework boundaries.
+
+In particular, occupant replacement accepts only a validated Primitive/Composite occupant descriptor (or null where removal is permitted), and the resulting Occupant Changed payload is validated before being emitted.
