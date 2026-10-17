@@ -10,7 +10,9 @@ Flows are the frontend analogue of orchestration: they coordinate existing UI en
 
 The UI Primitive owns its Events.
 
-The UI Composite owns Flows that may consume those Events.
+A UI Composite owns its Flows.
+
+A Slot also exposes Slot Events for lifecycle and occupant-level observations. These events belong to the Slot boundary, not to the contained Primitive or Composite.
 
     UI Primitive
     └── Event: submit.click
@@ -21,18 +23,27 @@ The UI Composite owns Flows that may consume those Events.
         ├── change state
         └── invoke external function
 
-A Flow does not transfer ownership of the Event from the Primitive to the Composite.
+    Slot
+    └── Event: occupantChanged
+            ↓
+        Composite Flow
+
+A Flow does not transfer ownership of an Event from its source to the Composite.
 
 ## Flow inputs
 
 A Flow may be triggered by:
 
 - an Event from a contained UI Primitive
+- a Slot Event
 - an Event or action exposed by a nested UI Composite
 - an explicit programmatic invocation
 - another Flow step, where the flow contract permits chaining
 
-Nested entities can be referenced through Slot paths.
+Slot Events include, at minimum:
+
+- State Changed — the entity occupying the Slot changed State
+- Occupant Changed — the UI Primitive or UI Composite occupying the Slot was replaced
 
 ## Flow actions
 
@@ -40,6 +51,9 @@ A Flow may coordinate:
 
 - reading or updating Properties
 - changing a Primitive or Composite State
+- changing a Slot occupant
+- changing Slot Properties
+- changing the count or membership of a repeatable Slot collection
 - invoking an Event or callable interface
 - invoking an external function
 - validating or transforming data
@@ -47,6 +61,22 @@ A Flow may coordinate:
 - branching according to a result
 
 FRNL defines the semantic coordination model. Application-specific business logic remains external to the semantic UI definition.
+
+## Real-time Slot replacement
+
+Because a Slot can change its occupant during active rendering, a Flow may perform a Slot occupant replacement as a runtime action.
+
+For example:
+
+    DashboardPage.content.occupantChanged
+            ↓
+    choose next content
+            ↓
+    DashboardPage.content <- ActivitySection
+
+The replacement preserves the Slot's identity and address while changing the entity represented there.
+
+The semantic model does not require the parent Composite itself to be reconstructed to perform this replacement.
 
 ## Example
 
@@ -95,10 +125,11 @@ The exact public surface exposed by a Composite should be defined by its semanti
 
 Flows do not render anything.
 
-A Flow can cause a state or property change that ultimately changes Primitive Visual Assets, but the Flow itself has no Visual Asset.
+A Flow can cause a state or property change that ultimately changes Primitive Visual Assets or Slot layout properties, but the Flow itself has no Visual Asset.
 
 This preserves the separation:
 
     Primitive -> visual + interaction
+    Slot     -> occupant + layout relationship + Slot Events
     Composite -> structure + coordination
     Flow     -> event/action sequencing
