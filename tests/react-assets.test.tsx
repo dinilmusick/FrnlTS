@@ -97,6 +97,15 @@ describe('FrnlTS Zod validation boundaries', () => {
     })).toThrow();
   });
 
+  it('rejects malformed injected event payloads', () => {
+    const store = createFrnlStore();
+    expect(() => store.getState().emit({
+      type: 'entity.stateChanged',
+      payload: { entityId: '', previousState: 'default', state: 'pressed' },
+    })).toThrow();
+    expect(store.getState().events).toHaveLength(0);
+  });
+
   it('validates emitted event payloads', () => {
     const store = createFrnlStore();
     store.getState().registerEntity('button', {
