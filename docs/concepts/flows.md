@@ -133,3 +133,9 @@ This preserves the separation:
     Slot     -> occupant + layout relationship + Slot Events
     Composite -> structure + coordination
     Flow     -> event/action sequencing
+
+## Flow input validation
+
+Flow inputs, injected payloads, and data crossing a framework semantic boundary are validated with **Zod** before the Flow consumes them. A Flow must not treat an unvalidated external payload as a valid semantic input.
+
+The exact schema is part of the Flow or callable contract. Invalid input is rejected at the boundary.
