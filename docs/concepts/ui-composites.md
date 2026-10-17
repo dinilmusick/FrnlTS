@@ -18,6 +18,8 @@ A UI Composite consists of:
     UI Composite
     ├── Slots[]
     │   └── UI Primitive | UI Composite
+    │       ├── Slot Properties
+    │       └── Slot Events
     ├── Properties
     ├── States[]
     └── Flows[]
@@ -60,15 +62,129 @@ For example:
 
 Page, Section, Header, Form, Card, Toolbar, and similar names are application-level roles expressed through Composite definitions. They are not additional foundational entity types.
 
+## Slots as live layout boundaries
+
+A Slot is a live semantic boundary, not merely a declaration-time placeholder.
+
+Each Slot has:
+
+- one current occupant
+- overridable Slot Properties
+- modulatable Slot Properties
+- Slot Events
+- a stable identity and address
+
+The occupant may be a UI Primitive or UI Composite.
+
+The Slot's own Properties describe the relationship between the occupant and the containing Composite. They do not mutate the intrinsic definition of the occupant.
+
+### Slot layout properties
+
+Slot Properties may provide basic renderer-independent layout and transformation controls such as:
+
+- position / translation
+- size / scale
+- rotation
+- visibility
+- ordering
+- alignment
+
+The concrete property vocabulary remains extensible.
+
+### Slot modulation and animation
+
+Slot Properties may be modulatable.
+
+A modulatable Slot Property can use a Curve with FRNL's canonical one-second domain. This allows the Slot itself to be animated independently of the contained UI entity.
+
+For example:
+
+    content.position -> Curve
+    content.scale    -> Curve
+    content.rotation -> Curve
+
+The same temporal rules apply:
+
+- Attack stretches/compresses the one-second Curve to the Attack duration.
+- Sustain loops the Curve over its one-second domain.
+- Release stretches/compresses the Curve to the Release duration.
+
+The Slot therefore provides a semantic layout/animation boundary without making the Composite a Visual Asset owner.
+
+## Dynamic Slot collections
+
+A Composite may define a repeatable Slot collection when a UI structure requires a variable number of occupants.
+
+For example:
+
+    Page.items[0]
+    Page.items[1]
+    Page.items[2]
+
+A repeatable Slot collection can grow, shrink, insert, remove, or reorder Slot instances at runtime.
+
+Each Slot instance retains its own:
+
+- identity
+- occupant
+- Slot Properties
+- Slot Events
+
+Changing collection cardinality therefore changes the number of participating Slot instances without introducing a new foundational UI entity type.
+
+## Live occupant replacement
+
+The occupant of a Slot can be replaced while the containing UI is actively rendering.
+
+For example:
+
+    Page.content
+        OverviewSection
+            ↓
+        ActivitySection
+
+The Slot remains `Page.content`. Its identity, address, Slot Properties, and Slot Event interface remain stable while the occupant changes.
+
+The semantic model therefore supports real-time UI entity replacement without requiring reconstruction of the containing Composite merely to replace one Slot occupant.
+
+The runtime is responsible for attaching and detaching the concrete rendering and interaction resources. FRNL defines the semantic capability, not the renderer-specific implementation.
+
+## Slot Events
+
+Each Slot has an Event boundary associated with its live occupant and lifecycle.
+
+At minimum:
+
+### State Changed
+
+Fired when the State of the UI entity currently occupying the Slot changes.
+
+This applies to both UI Primitives and UI Composites.
+
+The entity remains the owner of its State. The Slot exposes the transition as a Slot-level event.
+
+### Occupant Changed
+
+Fired when the UI Primitive or UI Composite occupying the Slot is replaced.
+
+Occupant replacement is distinct from State Changed: it changes the entity represented by the Slot rather than changing the State of that entity.
+
+Additional Slot Events may be defined for Slot Property changes, repeatable collection membership, or other Slot lifecycle conditions.
+
 ## Slot identity and addressability
 
 A Slot has a stable name within its containing Composite.
 
-The Composite exposes an addressable interface to the entities in its Slots. Nested entities can be addressed by composing Slot names through the hierarchy.
+The Composite exposes an addressable interface to the Slot and its occupant. Nested entities can be addressed by composing Slot names through the hierarchy.
 
     Page.content
     Page.content.profileSection
     Page.content.profileSection.name
+
+For repeatable Slot collections:
+
+    Page.items[0]
+    Page.items[1]
 
 Addressability is semantic and renderer-independent. A runtime may implement it with references, handles, paths, or another mechanism, but the FRNL contract is that the hierarchy is addressable.
 
@@ -88,13 +204,16 @@ A Composite State does not own Visual Assets.
 
 Instead, it may represent group-level semantic configuration and coordinate Properties and/or States of entities in its Slots.
 
+A Composite State may also affect Slot Properties. This permits a group state to change or animate the layout relationship of its children without introducing Composite Visual Assets.
+
     LoginForm
     ├── default
     ├── submitting
+    │   └── submit Slot scale/visibility may change
     ├── error
     └── success
 
-Any visual effect remains owned by the affected Primitive Visual Assets.
+Any actual visual effect remains owned by the affected Primitive Visual Assets.
 
 ## Flows
 
@@ -103,13 +222,17 @@ A Flow is a coordination definition owned by a UI Composite.
 Flows can connect:
 
 - Events emitted by contained UI Primitives
+- Slot Events
 - actions on contained entities
 - Composite or child State changes
+- Slot occupant replacement
+- Slot Property changes
+- repeatable Slot collection changes
 - data transformations or validation
 - external function invocation
 - subsequent steps in the same flow
 
-The Primitive remains the owner of its Event. The Composite owns the relationship between that Event and the subsequent coordinated actions.
+The Primitive remains the owner of its Event. The Slot remains the owner of Slot Events. The Composite owns the relationship between those Events and the subsequent coordinated actions.
 
 Example:
 
@@ -137,6 +260,8 @@ A Composite provides two related forms of grouping.
 ### Visual grouping
 
 The entities in its Slots form a structural UI region. The Composite itself does not own a rendered background, border, or other visual asset.
+
+Slot Properties can adjust how each occupant is positioned, transformed, ordered, or presented within that region.
 
 ### Logical grouping
 
@@ -173,6 +298,13 @@ The same entities are grouped under a common address and can participate in Comp
 - Composite States
 - Flows
 - Coordination across contained entities
+
+### Slot owns
+
+- Current occupant reference
+- Slot Properties
+- Slot Events
+- Slot identity/address within its parent Composite
 
 ### UI Composite does not own
 
