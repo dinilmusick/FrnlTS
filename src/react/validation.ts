@@ -10,7 +10,7 @@ const boundsSchema = z.object({ width: z.union([z.string(), z.number()]).optiona
 
 export const primitivePropsSchema = z.object({
   id: z.string().min(1), bounds: boundsSchema, state: z.string().min(1), properties: z.record(z.string(), z.unknown()),
-  children: reactNodeSchema.optional(), className: z.string().optional(), style: z.record(z.string(), z.unknown()).optional(), store: storeSchema, as: elementTypeSchema.optional(),
+  children: reactNodeSchema.optional(), className: z.string().optional(), hostProps: z.record(z.string(), z.unknown()).optional(), style: z.record(z.string(), z.unknown()).optional(), store: storeSchema, as: elementTypeSchema.optional(),
 });
 export const compositePropsSchema = z.object({
   id: z.string().min(1), state: z.string().min(1), properties: z.record(z.string(), z.unknown()), slots: reactNodeSchema, className: z.string().optional(), style: z.record(z.string(), z.unknown()).optional(), store: storeSchema,
