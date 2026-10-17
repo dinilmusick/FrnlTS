@@ -44,9 +44,9 @@ export function FrnlPrimitive({
     hostProps,
   });
 
-  const registeredRef = useRef<string | null>(null);
+  const prevPropsRef = useRef({ state, properties, bounds });
 
-  // Register entity on mount or when id/store changes
+  // Register entity on mount or when id/store changes (idempotent upsert)
   useEffect(() => {
     store.getState().registerEntity(id, {
       kind: 'primitive',
@@ -54,18 +54,45 @@ export function FrnlPrimitive({
       properties,
       bounds,
     });
-    registeredRef.current = id;
   }, [id, store]);
 
-  // Synchronize state prop changes to store if different
+  // Synchronize dynamic state, properties, and bounds prop changes to store (without stale overwrite)
   useEffect(() => {
-    if (registeredRef.current === id) {
-      const current = store.getState().entities[id];
-      if (current && current.state !== state) {
+    const prev = prevPropsRef.current;
+    const current = store.getState().entities[id];
+    if (!current) return;
+
+    // 1. State synchronization (only if state PROP has actually changed by caller)
+    if (state !== undefined && state !== prev.state) {
+      if (current.state !== state) {
         store.getState().setEntityState(id, state);
       }
     }
-  }, [id, state, store]);
+
+    // 2. Property synchronization (only if properties PROP has actually changed by caller)
+    if (properties && properties !== prev.properties) {
+      let propertiesChanged = false;
+      const prevProps = prev.properties ?? {};
+      for (const [key, value] of Object.entries(properties)) {
+        if (prevProps[key] !== value) {
+          propertiesChanged = true;
+          break;
+        }
+      }
+      if (propertiesChanged) {
+        store.getState().setEntityProperties(id, properties);
+      }
+    }
+
+    // 3. Bounds synchronization (only if bounds PROP has actually changed by caller)
+    if (bounds && bounds !== prev.bounds) {
+      if (prev.bounds?.width !== bounds.width || prev.bounds?.height !== bounds.height) {
+        store.getState().setEntityBounds(id, bounds);
+      }
+    }
+
+    prevPropsRef.current = { state, properties, bounds };
+  }, [id, state, properties, bounds, store]);
 
   // Subscribe to live entity state in store
   const entity = useStore(store, (current) => current.entities[id]);

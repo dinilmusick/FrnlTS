@@ -256,4 +256,114 @@ describe('FrnlTS React rendering suite', () => {
     expect(store.getState().entities['body-content'].state).toBe('ready');
     expect(store.getState().slots['strict-slot'].occupantId).toBe('body-content');
   });
+
+  it('9. Property synchronization: React prop updates sync to semantic store', () => {
+    const store = createFrnlStore();
+    const { rerender } = render(
+      <FrnlPrimitive
+        id="sync-button"
+        store={store}
+        state="default"
+        properties={{ variant: 'primary', count: 1 }}
+      >
+        Click
+      </FrnlPrimitive>
+    );
+
+    expect(store.getState().entities['sync-button']?.properties.variant).toBe('primary');
+    expect(store.getState().entities['sync-button']?.properties.count).toBe(1);
+
+    // Re-render with new properties
+    rerender(
+      <FrnlPrimitive
+        id="sync-button"
+        store={store}
+        state="default"
+        properties={{ variant: 'danger', count: 2 }}
+      >
+        Click
+      </FrnlPrimitive>
+    );
+
+    expect(store.getState().entities['sync-button']?.properties.variant).toBe('danger');
+    expect(store.getState().entities['sync-button']?.properties.count).toBe(2);
+
+    // Verify entity.propertyChanged events were recorded
+    const propertyEvents = store
+      .getState()
+      .events.filter((e) => e.type === 'entity.propertyChanged');
+    expect(propertyEvents.length).toBeGreaterThanOrEqual(2);
+    expect(
+      propertyEvents.some(
+        (e) =>
+          e.payload.entityId === 'sync-button' &&
+          e.payload.key === 'variant' &&
+          e.payload.value === 'danger'
+      )
+    ).toBe(true);
+  });
+
+  it('10. Empty slot rendering: replaceSlotOccupant(null) empties DOM occupant while slot remains mounted', () => {
+    const store = createFrnlStore();
+    render(
+      <FrnlSlot
+        id="dynamic-slot"
+        address="Container.content"
+        occupantId="initial-occupant"
+        occupantKind="primitive"
+        store={store}
+        occupants={{
+          'initial-occupant': <div data-testid="visible-occupant">Live Occupant</div>,
+        }}
+      />
+    );
+
+    // Initially occupant is in the document
+    expect(screen.getByTestId('visible-occupant')).toBeInTheDocument();
+    const slotEl = screen.getByTestId('visible-occupant').parentElement;
+    expect(slotEl).toHaveAttribute('data-frnl-kind', 'slot');
+    expect(slotEl).toHaveAttribute('data-frnl-slot-id', 'dynamic-slot');
+
+    // Replace occupant with null
+    act(() => {
+      store.getState().replaceSlotOccupant('dynamic-slot', null);
+    });
+
+    // Occupant is now unmounted from the DOM
+    expect(screen.queryByTestId('visible-occupant')).not.toBeInTheDocument();
+
+    // Slot element itself remains mounted in DOM with null occupant
+    expect(slotEl).toBeInTheDocument();
+    expect(slotEl).toHaveAttribute('data-frnl-kind', 'slot');
+    expect(slotEl).not.toHaveAttribute('data-frnl-occupant-id');
+    expect(store.getState().slots['dynamic-slot']?.occupantId).toBeNull();
+  });
+
+  it('11. Bounds synchronization: React bounds prop updates sync to semantic store', () => {
+    const store = createFrnlStore();
+    const { rerender } = render(
+      <FrnlPrimitive
+        id="resizable-box"
+        store={store}
+        bounds={{ width: 100, height: 50 }}
+      >
+        Box
+      </FrnlPrimitive>
+    );
+
+    expect(store.getState().entities['resizable-box']?.bounds).toEqual({ width: 100, height: 50 });
+
+    // Re-render with new bounds
+    rerender(
+      <FrnlPrimitive
+        id="resizable-box"
+        store={store}
+        bounds={{ width: 300, height: 150 }}
+      >
+        Box
+      </FrnlPrimitive>
+    );
+
+    expect(store.getState().entities['resizable-box']?.bounds).toEqual({ width: 300, height: 150 });
+  });
 });

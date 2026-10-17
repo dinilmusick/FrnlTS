@@ -46,9 +46,11 @@ export const compositePropsSchema = z.object({
 export const slotPropsSchema = z.object({
   id: z.string().min(1),
   address: z.string().min(1),
-  occupantId: z.string().min(1),
-  occupantKind: z.enum(['primitive', 'composite']),
-  occupants: z.record(z.string(), reactNodeSchema),
+  occupantId: z.string().min(1).nullable().optional(),
+  occupantKind: z.enum(['primitive', 'composite']).nullable().optional(),
+  occupants: z.record(z.string(), reactNodeSchema).optional().default({}),
   properties: z.record(z.string(), z.unknown()).optional(),
+  className: z.string().optional(),
+  style: z.record(z.string(), z.unknown()).optional(),
   store: storeSchema,
 });

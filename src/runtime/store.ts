@@ -7,6 +7,8 @@ import {
   entityStateSchema,
   occupantSchema,
   propertyKeySchema,
+  propertiesSchema,
+  boundsSchema,
   slotOccupantChangedPayloadSchema,
   slotPropertyChangedPayloadSchema,
   slotStateChangedPayloadSchema,
@@ -21,6 +23,7 @@ import {
   type SlotState,
   type SlotCollectionState,
   type FrnlEvent,
+  type Bounds,
 } from './validation.js';
 
 export type {
@@ -29,6 +32,7 @@ export type {
   SlotState,
   SlotCollectionState,
   FrnlEvent,
+  Bounds,
 } from './validation.js';
 
 export type FrnlStore = StoreApi<FrnlState>;
@@ -40,7 +44,10 @@ export interface FrnlState {
   events: FrnlEvent[];
   setEntityState: (entityId: string, state: string) => void;
   setEntityProperty: (entityId: string, key: string, value: unknown) => void;
+  setEntityProperties: (entityId: string, properties: Record<string, unknown>) => void;
+  setEntityBounds: (entityId: string, bounds?: Bounds) => void;
   setSlotProperty: (slotId: string, key: string, value: unknown) => void;
+  setSlotProperties: (slotId: string, properties: Record<string, unknown>) => void;
   replaceSlotOccupant: (slotId: string, occupant: { id: string; kind: EntityKind } | null) => void;
   registerEntity: (entityId: string, entity: EntityState) => void;
   registerSlot: (slotId: string, slot: SlotState) => void;
@@ -70,14 +77,31 @@ export function createFrnlStore(
       set((current) => ({ events: [...current.events, validated] }));
     },
 
+    /**
+     * registerEntity performs an idempotent upsert of declarative metadata.
+     *
+     * Semantic Authority Model:
+     * - Declarative Metadata (authoritative from registration / props):
+     *   `kind`, `properties`, `bounds`, `assets`.
+     * - Runtime State (authoritative from runtime / interactions):
+     *   `state` (active state is preserved across re-registrations),
+     *   `events` (event history is preserved).
+     */
     registerEntity: (entityId, entity) => {
       const id = entityIdSchema.parse(entityId);
       const validated = entityStateSchema.parse(entity);
       set((current) => {
         const existing = current.entities[id];
-        // If entity already exists, preserve its current runtime state
-        const nextEntity = existing
-          ? { ...validated, state: existing.state, properties: { ...existing.properties, ...validated.properties } }
+        const nextEntity: EntityState = existing
+          ? {
+              kind: validated.kind,
+              // Runtime state is preserved if already set
+              state: existing.state,
+              // Declarative metadata is merged / updated
+              properties: { ...existing.properties, ...validated.properties },
+              bounds: validated.bounds ?? existing.bounds,
+              assets: validated.assets ?? existing.assets,
+            }
           : validated;
         return {
           entities: { ...current.entities, [id]: nextEntity },
@@ -85,13 +109,19 @@ export function createFrnlStore(
       });
     },
 
+    /**
+     * registerSlot performs an idempotent upsert of slot declaration.
+     *
+     * Semantic Authority Model:
+     * - Declarative Metadata: `address`, `properties`.
+     * - Runtime-Owned: `occupantId`, `occupantKind` (preserved if already set in runtime).
+     */
     registerSlot: (slotId, slot) => {
       const id = entityIdSchema.parse(slotId);
       const validated = slotStateSchema.parse(slot);
       set((current) => {
         const existing = current.slots[id];
-        // If slot already exists, preserve its current occupant
-        const nextSlot = existing
+        const nextSlot: SlotState = existing
           ? {
               ...validated,
               occupantId: existing.occupantId,
@@ -243,6 +273,53 @@ export function createFrnlStore(
       });
     },
 
+    setEntityProperties: (entityId, properties) => {
+      const id = entityIdSchema.parse(entityId);
+      const validated = propertiesSchema.parse(properties);
+      set((current) => {
+        const entity = current.entities[id];
+        if (!entity) return current;
+        const newEvents: FrnlEvent[] = [];
+        for (const [key, value] of Object.entries(validated)) {
+          if (entity.properties[key] !== value) {
+            newEvents.push({
+              type: 'entity.propertyChanged' as const,
+              payload: entityPropertyChangedPayloadSchema.parse({
+                entityId: id,
+                key,
+                value,
+              }),
+            });
+          }
+        }
+        return {
+          entities: {
+            ...current.entities,
+            [id]: {
+              ...entity,
+              properties: { ...entity.properties, ...validated },
+            },
+          },
+          events: [...current.events, ...newEvents],
+        };
+      });
+    },
+
+    setEntityBounds: (entityId, bounds) => {
+      const id = entityIdSchema.parse(entityId);
+      const validated = bounds ? boundsSchema.parse(bounds) : undefined;
+      set((current) => {
+        const entity = current.entities[id];
+        if (!entity) return current;
+        return {
+          entities: {
+            ...current.entities,
+            [id]: { ...entity, bounds: validated },
+          },
+        };
+      });
+    },
+
     setSlotProperty: (slotId, key, value) => {
       const id = entityIdSchema.parse(slotId);
       const property = propertyKeySchema.parse(key);
@@ -260,6 +337,38 @@ export function createFrnlStore(
             [id]: { ...slot, properties: { ...slot.properties, [property]: value } },
           },
           events: [...current.events, { type: 'slot.propertyChanged' as const, payload }],
+        };
+      });
+    },
+
+    setSlotProperties: (slotId, properties) => {
+      const id = entityIdSchema.parse(slotId);
+      const validated = propertiesSchema.parse(properties);
+      set((current) => {
+        const slot = current.slots[id];
+        if (!slot) return current;
+        const newEvents: FrnlEvent[] = [];
+        for (const [key, value] of Object.entries(validated)) {
+          if (slot.properties[key] !== value) {
+            newEvents.push({
+              type: 'slot.propertyChanged' as const,
+              payload: slotPropertyChangedPayloadSchema.parse({
+                slotId: id,
+                key,
+                value,
+              }),
+            });
+          }
+        }
+        return {
+          slots: {
+            ...current.slots,
+            [id]: {
+              ...slot,
+              properties: { ...slot.properties, ...validated },
+            },
+          },
+          events: [...current.events, ...newEvents],
         };
       });
     },

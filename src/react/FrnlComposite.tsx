@@ -7,9 +7,9 @@ import { compositePropsSchema, slotPropsSchema } from './validation.js';
 export interface FrnlSlotProps {
   id: string;
   address: string;
-  occupantId: string;
-  occupantKind: EntityKind;
-  occupants: Record<string, ReactNode>;
+  occupantId?: string | null;
+  occupantKind?: EntityKind | null;
+  occupants?: Record<string, ReactNode>;
   properties?: Record<string, unknown>;
   className?: string;
   style?: CSSProperties;
@@ -19,9 +19,9 @@ export interface FrnlSlotProps {
 export function FrnlSlot({
   id,
   address,
-  occupantId,
-  occupantKind,
-  occupants,
+  occupantId = null,
+  occupantKind = null,
+  occupants = {},
   properties = {},
   className,
   style,
@@ -34,6 +34,8 @@ export function FrnlSlot({
     occupantKind,
     occupants,
     properties,
+    className,
+    style,
     store,
   });
 
@@ -41,23 +43,47 @@ export function FrnlSlot({
     store.getState().registerSlot(id, {
       id,
       address,
-      occupantId,
-      occupantKind,
+      occupantId: occupantId ?? null,
+      occupantKind: occupantKind ?? null,
       properties,
     });
   }, [id, address, store]);
 
+  const prevPropsRef = useRef({ properties });
+
+  // Synchronize slot property prop changes to store
+  useEffect(() => {
+    const prev = prevPropsRef.current;
+    const current = store.getState().slots[id];
+    if (!current || !properties) return;
+    if (properties !== prev.properties) {
+      let propertiesChanged = false;
+      const prevProps = prev.properties ?? {};
+      for (const [key, value] of Object.entries(properties)) {
+        if (prevProps[key] !== value) {
+          propertiesChanged = true;
+          break;
+        }
+      }
+      if (propertiesChanged) {
+        store.getState().setSlotProperties(id, properties);
+      }
+      prevPropsRef.current = { properties };
+    }
+  }, [id, properties, store]);
+
   const slot = useStore(store, (current) => current.slots[id]);
   const effectiveProperties = slot?.properties ?? properties;
-  const activeOccupantId = slot?.occupantId ?? occupantId;
-  const renderedOccupant = occupants[activeOccupantId] ?? null;
+  // If slot exists in store, its occupantId is authoritative (including null)
+  const activeOccupantId = slot !== undefined ? slot.occupantId : (occupantId ?? null);
+  const renderedOccupant = (activeOccupantId && occupants[activeOccupantId]) ? occupants[activeOccupantId] : null;
 
   return (
     <div
       data-frnl-kind="slot"
       data-frnl-slot-id={id}
       data-frnl-address={slot?.address ?? address}
-      data-frnl-occupant-id={activeOccupantId}
+      data-frnl-occupant-id={activeOccupantId ?? undefined}
       className={className}
       style={{
         position: 'relative',
@@ -99,7 +125,7 @@ export function FrnlComposite({
     store,
   });
 
-  const registeredRef = useRef<string | null>(null);
+  const prevPropsRef = useRef({ state, properties });
 
   useEffect(() => {
     store.getState().registerEntity(id, {
@@ -107,30 +133,51 @@ export function FrnlComposite({
       state,
       properties,
     });
-    registeredRef.current = id;
   }, [id, store]);
 
+  // Synchronize dynamic state and property changes to store (without stale overwrite)
   useEffect(() => {
-    if (registeredRef.current === id) {
-      const current = store.getState().entities[id];
-      if (current && current.state !== state) {
+    const prev = prevPropsRef.current;
+    const current = store.getState().entities[id];
+    if (!current) return;
+
+    if (state !== undefined && state !== prev.state) {
+      if (current.state !== state) {
         store.getState().setEntityState(id, state);
       }
     }
-  }, [id, state, store]);
+
+    if (properties && properties !== prev.properties) {
+      let propertiesChanged = false;
+      const prevProps = prev.properties ?? {};
+      for (const [key, value] of Object.entries(properties)) {
+        if (prevProps[key] !== value) {
+          propertiesChanged = true;
+          break;
+        }
+      }
+      if (propertiesChanged) {
+        store.getState().setEntityProperties(id, properties);
+      }
+    }
+
+    prevPropsRef.current = { state, properties };
+  }, [id, state, properties, store]);
 
   const entity = useStore(store, (current) => current.entities[id]);
+  const effectiveState = entity?.state ?? state;
+  const effectiveProperties = entity?.properties ?? properties;
 
   return (
     <div
       data-frnl-kind="ui-composite"
       data-frnl-id={id}
-      data-frnl-state={entity?.state ?? state}
+      data-frnl-state={effectiveState}
       className={className}
       style={{
         position: 'relative',
         ...style,
-        ...((entity?.properties.style as CSSProperties | undefined) ?? {}),
+        ...((effectiveProperties.style as CSSProperties | undefined) ?? {}),
       }}
     >
       {slots}
