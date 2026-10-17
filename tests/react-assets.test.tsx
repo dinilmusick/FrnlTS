@@ -70,3 +70,44 @@ describe('FrnlTS React asset runtime contracts', () => {
     expect(store.getState().entities.dialog.state).toBe('open');
   });
 });
+
+
+describe('FrnlTS Zod validation boundaries', () => {
+  it('rejects invalid entity registration payloads', () => {
+    const store = createFrnlStore();
+    expect(() => store.getState().registerEntity('', {
+      kind: 'primitive',
+      state: 'default',
+      properties: {},
+    })).toThrow();
+  });
+
+  it('rejects invalid slot occupant payloads', () => {
+    const store = createFrnlStore();
+    store.getState().registerSlot('content', {
+      id: 'content',
+      address: 'Page.content',
+      occupantId: 'overview',
+      occupantKind: 'composite',
+      properties: {},
+    });
+    expect(() => store.getState().replaceSlotOccupant('content', {
+      id: '',
+      kind: 'primitive',
+    })).toThrow();
+  });
+
+  it('validates emitted event payloads', () => {
+    const store = createFrnlStore();
+    store.getState().registerEntity('button', {
+      kind: 'primitive',
+      state: 'default',
+      properties: {},
+    });
+    store.getState().setEntityState('button', 'pressed');
+    expect(store.getState().events.at(-1)).toMatchObject({
+      type: 'entity.stateChanged',
+      payload: { entityId: 'button', previousState: 'default', state: 'pressed' },
+    });
+  });
+});
