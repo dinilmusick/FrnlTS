@@ -3,7 +3,7 @@ import { z } from 'zod';
 import {
   entityIdSchema, entityPropertyChangedPayloadSchema, entityStateChangedPayloadSchema,
   entityStateSchema, occupantSchema, propertyKeySchema, slotOccupantChangedPayloadSchema,
-  slotPropertyChangedPayloadSchema, slotStateSchema, stateNameSchema, type EntityKind,
+  slotPropertyChangedPayloadSchema, slotStateSchema, stateNameSchema, frnlEventSchema, type EntityKind,
   type EntityState, type SlotState,
 } from './validation.js';
 
@@ -34,7 +34,7 @@ export function createFrnlStore(initial?: Partial<Pick<FrnlState, 'entities' | '
 
   return createStore<FrnlState>((set) => ({
     entities: initialEntities, slots: initialSlots, events: [],
-    emit: (event) => set((current) => ({ events: [...current.events, event] })),
+    emit: (event) => { const validated = frnlEventSchema.parse(event); set((current) => ({ events: [...current.events, validated] })); },
     registerEntity: (entityId, entity) => {
       const id = entityIdSchema.parse(entityId);
       const validated = entityStateSchema.parse(entity);
