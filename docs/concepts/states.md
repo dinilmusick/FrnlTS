@@ -14,16 +14,30 @@ A UI Composite State describes group-level semantic configuration for the Compos
 
 A Composite State does not own Visual Assets. It may coordinate or represent changes to properties and/or States of entities in its Slots, but the actual visual representation remains owned by the affected UI Primitives.
 
+A Composite State may also affect Slot Properties. This allows a group state to change or animate the layout relationship of contained entities without giving the Composite its own Visual Assets.
+
 For example:
 
     LoginForm
     ├── State: submitting
-    │   ├── coordinate username/password controls
-    │   ├── coordinate submit control state
+    │   ├── coordinate child states
+    │   ├── change submit Slot visibility/transform
     │   └── represent form-level submission status
     └── no Visual Assets owned by LoginForm
 
-A Composite State may use the same Attack, Sustain, and Release semantics as a Primitive State.
+## Slot State Events
+
+Because a Slot has its own Event boundary, a state transition of the entity occupying a Slot can produce a Slot-level State Changed event.
+
+This does not transfer State ownership to the Slot.
+
+    UI Primitive / UI Composite
+            │
+            └── State changes
+                    ↓
+                Slot.stateChanged
+
+The entity remains the owner of its State; the Slot observes and exposes the Slot-level event.
 
 ## Temporal semantics
 
@@ -31,7 +45,7 @@ State does not own Curve duration. Curves have a canonical one-second domain, wh
 
 A State contains Attack property definitions, Sustain property definitions, and Release property definitions.
 
-Those definitions may contain static values or Curves for editable properties.
+Those definitions may contain static values or Curves for editable properties, including applicable Slot Properties.
 
 A UI entity may define any number of States.
 
