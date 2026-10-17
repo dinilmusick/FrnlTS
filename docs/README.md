@@ -34,3 +34,7 @@ A UI Composite Slot may contain either a UI Primitive or another UI Composite. T
 Each Slot is also a live layout and replacement boundary. It has overridable/modulatable Slot Properties, Slot Events, and a replaceable occupant. The Slot itself is not a Visual Asset.
 
 UI Composites do not own Visual Assets. Visual rendering remains the responsibility of contained UI Primitives. Composites provide grouping, addressability, group-level state, and Flows that coordinate events and actions across their contained UI entities.
+
+## Runtime validation
+
+FrnlTS uses **Zod by default for runtime validation**. All injected payloads and semantic inputs entering framework code assets, Zustand state mutations, Slot operations, Flow inputs, and event payloads must be validated against the applicable Zod schema. TypeScript remains the compile-time layer; Zod provides runtime enforcement.
