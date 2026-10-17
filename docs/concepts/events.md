@@ -65,3 +65,9 @@ Slot Events expose a callable event interface to the containing Composite's Flow
 Custom events can be triggered by code against a UI Primitive or, where defined, a Slot.
 
 FRNL defines the event semantics and interface. The application owns the implementation of the functions invoked by events.
+
+## Event payload validation
+
+Event payloads are runtime-validated with **Zod**. Each framework-defined event has a corresponding Zod payload schema, and emitted payloads must satisfy that schema before entering the event stream.
+
+This applies to Primitive Events, Slot Events, and framework-defined programmatic event payloads. TypeScript types remain the compile-time representation of the same contracts.
