@@ -14,6 +14,7 @@ export interface FrnlPrimitiveProps {
   className?: string;
   style?: CSSProperties;
   as?: React.ElementType;
+  hostProps?: Record<string, unknown>;
   store: StoreApi<FrnlState>;
 }
 
@@ -27,8 +28,9 @@ export function FrnlPrimitive({
   style,
   store,
   as: Component = 'div',
+  hostProps = {},
 }: FrnlPrimitiveProps) {
-  primitivePropsSchema.parse({ id, bounds, state, properties, children, className, style, store, as: Component });
+  primitivePropsSchema.parse({ id, bounds, state, properties, children, className, style, store, as: Component, hostProps });
   const entity = useStore(store, (current) => current.entities[id]);
 
   useEffect(() => {
@@ -48,6 +50,7 @@ export function FrnlPrimitive({
       data-frnl-id={id}
       data-frnl-state={effectiveState}
       className={className}
+      {...hostProps}
       style={{
         position: 'relative',
         width: bounds?.width,
