@@ -1,4 +1,5 @@
 import { useEffect, type CSSProperties, type ReactNode } from 'react';
+import type React from 'react';
 import type { StoreApi } from 'zustand/vanilla';
 import { useStore } from 'zustand';
 import type { FrnlState } from '../runtime/store.js';
@@ -12,6 +13,7 @@ export interface FrnlPrimitiveProps {
   children?: ReactNode;
   className?: string;
   style?: CSSProperties;
+  as?: React.ElementType;
   store: StoreApi<FrnlState>;
 }
 
@@ -24,8 +26,9 @@ export function FrnlPrimitive({
   className,
   style,
   store,
+  as: Component = 'div',
 }: FrnlPrimitiveProps) {
-  primitivePropsSchema.parse({ id, bounds, state, properties, children, className, style, store });
+  primitivePropsSchema.parse({ id, bounds, state, properties, children, className, style, store, as: Component });
   const entity = useStore(store, (current) => current.entities[id]);
 
   useEffect(() => {
@@ -40,7 +43,7 @@ export function FrnlPrimitive({
   const effectiveProperties = entity?.properties ?? properties;
 
   return (
-    <div
+    <Component
       data-frnl-kind="ui-primitive"
       data-frnl-id={id}
       data-frnl-state={effectiveState}
@@ -54,6 +57,6 @@ export function FrnlPrimitive({
       }}
     >
       {children}
-    </div>
+    </Component>
   );
 }
