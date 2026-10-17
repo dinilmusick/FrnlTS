@@ -2,6 +2,7 @@ import { useEffect, type CSSProperties, type ReactNode } from 'react';
 import type { StoreApi } from 'zustand/vanilla';
 import { useStore } from 'zustand';
 import type { FrnlState } from '../runtime/store.js';
+import { primitivePropsSchema } from './validation.js';
 
 export interface FrnlPrimitiveProps {
   id: string;
@@ -24,6 +25,7 @@ export function FrnlPrimitive({
   style,
   store,
 }: FrnlPrimitiveProps) {
+  primitivePropsSchema.parse({ id, bounds, state, properties, children, className, style, store });
   const entity = useStore(store, (current) => current.entities[id]);
 
   useEffect(() => {
