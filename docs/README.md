@@ -38,3 +38,11 @@ UI Composites do not own Visual Assets. Visual rendering remains the responsibil
 ## Runtime validation
 
 FrnlTS uses **Zod by default for runtime validation**. All injected payloads and semantic inputs entering framework code assets, Zustand state mutations, Slot operations, Flow inputs, and event payloads must be validated against the applicable Zod schema. TypeScript remains the compile-time layer; Zod provides runtime enforcement.
+
+## Reliability and publishing contract
+
+FrnlTS is the semantic frontend framework for building reliable UI systems, analogous to KrnlTS for backend services. Applications define UI through exactly two first-class entities: UI Primitive and UI Composite. Zustand is the runtime state mechanism and Zod is the runtime validation boundary for semantic inputs and event payloads.
+
+FrnlTS is published as the reusable @dinilmusick/frnlts npm package. Renderer-facing React assets are exposed through the @dinilmusick/frnlts/react entry point; FrnlTS owns the semantic contract, not application-specific visual design.
+
+Floks consumes FrnlTS and defines the canonical concrete UI element library. A simple element such as a basic Button is a UI Primitive. More involved variants may be UI Composites composed from Frnl primitives and slots. This distinction is semantic and does not require every visual variant to have the same structural category.
