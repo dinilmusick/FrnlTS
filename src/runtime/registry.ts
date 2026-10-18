@@ -1,4 +1,5 @@
 import type { FrnlCapability, FrnlContract } from './core.js';
+import { DependencyGraph } from './dependencies.js';
 
 export interface FrnlRegistration {
   readonly id: string;
@@ -76,6 +77,31 @@ export class FrnlRegistry {
         throw new Error(`Missing capability '${cap}' for registration '${id}'`);
       }
     }
+  }
+
+  toDependencyGraph(): DependencyGraph {
+    const graph = new DependencyGraph();
+    for (const entry of this.entries.values()) {
+      const requires: string[] = [];
+      if (entry.contract?.capabilities) {
+        requires.push(...entry.contract.capabilities);
+      }
+      const provides: string[] = [];
+      if (entry.capabilities) {
+        for (const cap of entry.capabilities) {
+          if (cap.provides) {
+            provides.push(...cap.provides);
+          }
+        }
+      }
+      graph.register({
+        id: entry.id,
+        version: entry.version,
+        requires,
+        provides,
+      });
+    }
+    return graph;
   }
 
   clear(): void {

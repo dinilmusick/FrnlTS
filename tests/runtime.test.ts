@@ -17,13 +17,14 @@ import { FrnlRegistry } from '../src/runtime/registry.js';
 import { DependencyGraph } from '../src/runtime/dependencies.js';
 import { matchRoute, buildRouteUrl, FrnlRouter } from '../src/runtime/routing.js';
 import { validateAccessibility } from '../src/runtime/accessibility.js';
+import { createFrnlStore } from '../src/runtime/store.js';
 import * as RootExports from '../src/index.js';
 import * as RuntimeExports from '../src/runtime/index.js';
 import * as ReactExports from '../src/react/index.js';
 
-describe('FrnlTS Frontend Runtime', () => {
-  describe('Lifecycle Controller', () => {
-    it('enforces valid forward lifecycle transitions', () => {
+describe('FrnlTS Frontend Runtime Suite', () => {
+  describe('1. Lifecycle Controller', () => {
+    it('enforces full forward lifecycle transitions', () => {
       const lc = createLifecycle();
       expect(lc.phase).toBe('created');
 
@@ -67,7 +68,7 @@ describe('FrnlTS Frontend Runtime', () => {
 
       lc.transition('disposing');
       lc.transition('disposed');
-      // No transitions out of disposed
+      // No transitions allowed out of disposed
       expect(() => lc.transition('created')).toThrow(LifecycleError);
       expect(() => lc.transition('active')).toThrow(LifecycleError);
     });
@@ -99,7 +100,7 @@ describe('FrnlTS Frontend Runtime', () => {
       expect(events).toHaveLength(2);
     });
 
-    it('recovers from failed state back to initializing or disposed', () => {
+    it('handles recovery from failed state back to initializing or to disposed', () => {
       const lc = createLifecycle('initializing');
       lc.transition('failed');
       expect(lc.phase).toBe('failed');
@@ -113,7 +114,7 @@ describe('FrnlTS Frontend Runtime', () => {
     });
   });
 
-  describe('Contracts, Commands, Capabilities and Effects', () => {
+  describe('2. Contracts, Commands, Capabilities and Effects', () => {
     it('validates and freezes semantic contracts', () => {
       const contract = defineContract({
         id: 'button-action',
@@ -126,7 +127,6 @@ describe('FrnlTS Frontend Runtime', () => {
       expect(contract.version).toBe(1);
       expect(Object.isFrozen(contract)).toBe(true);
 
-      // Rejects invalid version
       expect(() =>
         defineContract({
           id: 'bad',
@@ -169,7 +169,7 @@ describe('FrnlTS Frontend Runtime', () => {
       await expect(effect.run(controller.signal)).rejects.toThrow('aborted');
     });
 
-    it('preserves structured causes in FrnlFault', () => {
+    it('preserves structured causes and properties in FrnlFault', () => {
       const originalErr = new Error('Database connection failed');
       const fault = new FrnlFault({
         code: 'STORAGE_UNAVAILABLE',
@@ -187,7 +187,7 @@ describe('FrnlTS Frontend Runtime', () => {
     });
   });
 
-  describe('Scoped Resources and Lifecycle', () => {
+  describe('3. Scoped Resources, Race Conditions and Lifecycle Invariants', () => {
     it('acquires resource and caches value idempotently', async () => {
       let acquireCount = 0;
       const res = defineResource({
@@ -239,144 +239,190 @@ describe('FrnlTS Frontend Runtime', () => {
       await scope.dispose();
     });
 
-    it('release is idempotent and safely called multiple times', async () => {
-      let releaseCount = 0;
-      const res = defineResource({
-        id: 'closable-handle',
-        acquire: () => 999,
-        release: () => {
-          releaseCount++;
+    it('race condition: handles resource acquisition finishing after release was requested', async () => {
+      let releaseCalled = false;
+      const slowRes = defineResource({
+        id: 'slow-async-res',
+        acquire: async () => {
+          await new Promise((r) => setTimeout(r, 40));
+          return 'late-value';
+        },
+        release: (val) => {
+          if (val === 'late-value') {
+            releaseCalled = true;
+          }
         },
       });
 
-      const ctrl = createResourceController(res, 'manual-scope');
-      await ctrl.load();
-      expect(ctrl.status).toBe('ready');
+      const ctrl = createResourceController(slowRes, 'race-scope');
+      const loadPromise = ctrl.load();
 
+      // Release mid-flight before acquire completes
       await ctrl.release();
+
+      await expect(loadPromise).rejects.toThrow();
       expect(ctrl.status).toBe('released');
-      expect(releaseCount).toBe(1);
-
-      // Calling release again must not re-trigger release logic
-      await ctrl.release();
-      expect(releaseCount).toBe(1);
+      expect(releaseCalled).toBe(true);
     });
 
-    it('disposal of parent scope deterministically disposes child scopes and resources', async () => {
+    it('race condition: handles failed acquisition followed by successful retry', async () => {
+      let attempts = 0;
+      const retryableRes = defineResource({
+        id: 'flakey-res',
+        acquire: async () => {
+          attempts++;
+          if (attempts === 1) {
+            throw new Error('Temporary network glitch');
+          }
+          return 'recovered-data';
+        },
+      });
+
+      const ctrl = createResourceController(retryableRes, 'retry-scope');
+
+      // Attempt 1 fails
+      await expect(ctrl.load()).rejects.toThrow('Temporary network glitch');
+      expect(ctrl.status).toBe('error');
+      expect(ctrl.error?.code).toBe('RESOURCE_ACQUIRE_FAILED');
+
+      // Attempt 2 (retry) succeeds
+      const result = await ctrl.load();
+      expect(result).toBe('recovered-data');
+      expect(ctrl.status).toBe('ready');
+      expect(ctrl.error).toBeUndefined();
+    });
+
+    it('race condition: handles release failure cleanly and preserves cause', async () => {
+      const releaseError = new Error('Failed to cleanly close socket');
+      const failingRes = defineResource({
+        id: 'failing-release-res',
+        acquire: () => ({ socketId: 101 }),
+        release: () => {
+          throw releaseError;
+        },
+      });
+
+      const ctrl = createResourceController(failingRes, 'fail-release-scope');
+      await ctrl.load();
+
+      await expect(ctrl.release()).rejects.toThrow(FrnlFault);
+      expect(ctrl.status).toBe('released');
+      expect(ctrl.error?.code).toBe('RESOURCE_RELEASE_FAILED');
+      expect(ctrl.error?.cause).toBe(releaseError);
+
+      // Calling release again does not duplicate the throw
+      await expect(ctrl.release()).resolves.toBeUndefined();
+    });
+
+    it('race condition: repeated concurrent release calls resolve identically', async () => {
+      let releaseCount = 0;
+      const res = defineResource({
+        id: 'double-release-res',
+        acquire: () => 123,
+        release: async () => {
+          releaseCount++;
+          await new Promise((r) => setTimeout(r, 20));
+        },
+      });
+
+      const ctrl = createResourceController(res, 'multi-release-scope');
+      await ctrl.load();
+
+      await Promise.all([ctrl.release(), ctrl.release(), ctrl.release()]);
+      expect(releaseCount).toBe(1);
+      expect(ctrl.status).toBe('released');
+    });
+
+    it('parent and child scopes: cascading disposal and zero memory leaks', async () => {
       const releasedIds: string[] = [];
 
-      const parentScope = createScope('parent');
-      const childScope1 = parentScope.createChildScope('child-1');
-      const childScope2 = childScope1.createChildScope('child-2');
+      const parentScope = createScope('root-parent');
+      const child1 = parentScope.createChildScope('child-1');
+      const child2 = child1.createChildScope('child-2');
 
-      const res1 = parentScope.add(
+      const resRoot = parentScope.add(
         defineResource({
-          id: 'res-parent',
-          acquire: () => 'val-parent',
+          id: 'res-root',
+          acquire: () => 'val-root',
           release: () => {
-            releasedIds.push('res-parent');
+            releasedIds.push('res-root');
           },
         })
       );
 
-      const res2 = childScope1.add(
+      const resChild1 = child1.add(
         defineResource({
-          id: 'res-child-1',
-          acquire: () => 'val-child-1',
+          id: 'res-child1',
+          acquire: () => 'val-child1',
           release: () => {
-            releasedIds.push('res-child-1');
+            releasedIds.push('res-child1');
           },
         })
       );
 
-      const res3 = childScope2.add(
+      const resChild2 = child2.add(
         defineResource({
-          id: 'res-child-2',
-          acquire: () => 'val-child-2',
+          id: 'res-child2',
+          acquire: () => 'val-child2',
           release: () => {
-            releasedIds.push('res-child-2');
+            releasedIds.push('res-child2');
           },
         })
       );
 
-      await Promise.all([res1.load(), res2.load(), res3.load()]);
+      await Promise.all([resRoot.load(), resChild1.load(), resChild2.load()]);
 
-      // Disposing the root parent must clean up all generations of child scopes
+      // Early disposal of child2 should clean up child2 without disposing child1 or parent
+      await child2.dispose();
+      expect(resChild2.status).toBe('released');
+      expect(resChild1.status).toBe('ready');
+      expect(resRoot.status).toBe('ready');
+      expect(releasedIds).toEqual(['res-child2']);
+
+      // Disposing parentScope cascades through all remaining descendants
       await parentScope.dispose();
+      expect(resChild1.status).toBe('released');
+      expect(resRoot.status).toBe('released');
+      expect(releasedIds).toContain('res-root');
+      expect(releasedIds).toContain('res-child1');
 
-      expect(res1.status).toBe('released');
-      expect(res2.status).toBe('released');
-      expect(res3.status).toBe('released');
-      expect(releasedIds).toContain('res-parent');
-      expect(releasedIds).toContain('res-child-1');
-      expect(releasedIds).toContain('res-child-2');
-
-      // Attempting to add a resource to a disposed scope throws FrnlFault
+      // Attempting to create child or add resource to disposed scope throws FrnlFault
+      expect(() => parentScope.createChildScope('new-child')).toThrow(FrnlFault);
       expect(() =>
         parentScope.add(
           defineResource({
-            id: 'late-res',
+            id: 'late',
             acquire: () => 1,
           })
         )
       ).toThrow(FrnlFault);
     });
-
-    it('handles aborted async resource acquisition safely without leaving inconsistent state', async () => {
-      let resourceCleanedUp = false;
-      const slowRes = defineResource({
-        id: 'slow-resource',
-        acquire: async ({ signal }) => {
-          await new Promise((resolve, reject) => {
-            const timer = setTimeout(resolve, 50);
-            signal.addEventListener('abort', () => {
-              clearTimeout(timer);
-              reject(new Error('Acquisition aborted'));
-            });
-          });
-          return 'slow-data';
-        },
-        release: () => {
-          resourceCleanedUp = true;
-        },
-      });
-
-      const scope = createScope('abort-test-scope');
-      const ctrl = scope.add(slowRes);
-
-      const loadPromise = ctrl.load();
-      // Dispose scope mid-flight
-      await scope.dispose();
-
-      await expect(loadPromise).rejects.toThrow();
-      expect(ctrl.status).toBe('released');
-    });
   });
 
-  describe('Semantic Registry and Capability Resolution', () => {
-    it('registers and resolves entries and prevents version downgrades', () => {
+  describe('4. Registry, Capability Resolution & Composable Dependency Graph', () => {
+    it('registers entries, supports version upgrade, and blocks version downgrade', () => {
       const reg = new FrnlRegistry();
       reg.register({
-        id: 'theme-provider',
+        id: 'theme-service',
         version: 1,
         value: { theme: 'light' },
       });
 
-      expect(reg.has('theme-provider')).toBe(true);
-      expect(reg.resolve('theme-provider')).toEqual({ theme: 'light' });
+      expect(reg.has('theme-service')).toBe(true);
+      expect(reg.resolve('theme-service')).toEqual({ theme: 'light' });
 
       // Upgrade to version 2
       reg.register({
-        id: 'theme-provider',
+        id: 'theme-service',
         version: 2,
         value: { theme: 'dark' },
       });
-      expect(reg.resolve('theme-provider')).toEqual({ theme: 'dark' });
+      expect(reg.resolve('theme-service')).toEqual({ theme: 'dark' });
 
-      // Downgrade to version 1 is blocked
+      // Downgrade to version 1 throws error
       expect(() =>
         reg.register({
-          id: 'theme-provider',
+          id: 'theme-service',
           version: 1,
           value: { theme: 'old' },
         })
@@ -386,114 +432,172 @@ describe('FrnlTS Frontend Runtime', () => {
     it('enforces required capabilities from contract and capability schemas', () => {
       const reg = new FrnlRegistry();
       reg.register({
-        id: 'modal-service',
+        id: 'editor-service',
         version: 1,
         contract: {
-          id: 'modal-contract',
+          id: 'editor-contract',
           version: 1,
-          capabilities: ['focus-trap', 'portal-mount'],
+          capabilities: ['syntax-highlighting', 'undo-history'],
         },
-        value: { open: () => {} },
+        value: { init: () => {} },
       });
 
-      // Missing capabilities
-      expect(() => reg.requireCapabilities('modal-service', ['focus-trap'])).toThrow(
-        /Missing capability 'portal-mount'/
+      expect(() => reg.requireCapabilities('editor-service', ['syntax-highlighting'])).toThrow(
+        /Missing capability 'undo-history'/
       );
 
-      // Exact capabilities present
       expect(() =>
-        reg.requireCapabilities('modal-service', ['focus-trap', 'portal-mount', 'extra'])
+        reg.requireCapabilities('editor-service', [
+          'syntax-highlighting',
+          'undo-history',
+          'extra-cap',
+        ])
       ).not.toThrow();
     });
-  });
 
-  describe('Dependency Graph and Cycle Detection', () => {
-    it('validates missing dependencies', () => {
+    it('bridges registry to DependencyGraph and validates dependencies', () => {
+      const reg = new FrnlRegistry();
+      reg.register({
+        id: 'storage-service',
+        version: 1,
+        capabilities: [
+          defineCapability({
+            id: 'kv-store',
+            version: 1,
+            provides: ['key-value'],
+          }),
+        ],
+        value: {},
+      });
+
+      reg.register({
+        id: 'user-profile-service',
+        version: 1,
+        contract: defineContract({
+          id: 'user-contract',
+          version: 1,
+          capabilities: ['key-value'],
+        }),
+        value: {},
+      });
+
+      const graph = reg.toDependencyGraph();
+      const validationErrors = graph.validate();
+      expect(validationErrors).toEqual([]);
+
+      const order = graph.topologicalOrder();
+      expect(order.indexOf('storage-service')).toBeLessThan(order.indexOf('user-profile-service'));
+    });
+
+    it('detects missing dependencies and cyclic dependencies in DependencyGraph', () => {
       const graph = new DependencyGraph();
-      graph.register({ id: 'app', requires: ['auth', 'router'] });
-      graph.register({ id: 'router' });
+      graph.register({ id: 'page', requires: ['auth-service'] });
 
       const errors = graph.validate();
       expect(errors).toHaveLength(1);
-      expect(errors[0]).toContain('app requires missing dependency auth');
-    });
+      expect(errors[0]).toContain('page requires missing dependency auth-service');
 
-    it('detects direct and indirect cycles in topological order', () => {
-      const graph = new DependencyGraph();
-      graph.register({ id: 'a', requires: ['b'] });
-      graph.register({ id: 'b', requires: ['c'] });
-      graph.register({ id: 'c', requires: ['a'] });
+      // Cycle detection
+      const cyclicGraph = new DependencyGraph();
+      cyclicGraph.register({ id: 'a', requires: ['b'] });
+      cyclicGraph.register({ id: 'b', requires: ['c'] });
+      cyclicGraph.register({ id: 'c', requires: ['a'] });
 
-      expect(() => graph.topologicalOrder()).toThrow(/cycle detected/i);
-    });
-
-    it('computes correct topological order when acyclic', () => {
-      const graph = new DependencyGraph();
-      graph.register({ id: 'core' });
-      graph.register({ id: 'auth', requires: ['core'] });
-      graph.register({ id: 'dashboard', requires: ['auth'] });
-
-      const order = graph.topologicalOrder();
-      expect(order.indexOf('core')).toBeLessThan(order.indexOf('auth'));
-      expect(order.indexOf('auth')).toBeLessThan(order.indexOf('dashboard'));
+      expect(() => cyclicGraph.topologicalOrder()).toThrow(/cycle detected/i);
     });
   });
 
-  describe('Routing and URL Generation', () => {
-    it('matches parameterized routes and parses query strings', () => {
-      const route = { id: 'user-profile', pattern: '/users/:userId/tab/:tabId' };
-      const match = matchRoute(route, 'https://example.com/users/u123/tab/settings?sort=asc&view=card');
-
+  describe('5. Routing Hardening', () => {
+    it('escapes regex characters in static path segments', () => {
+      const route = { id: 'special', pattern: '/api/v1.0/doc(overview)' };
+      const match = matchRoute(route, '/api/v1.0/doc(overview)');
       expect(match).not.toBeNull();
-      expect(match?.id).toBe('user-profile');
-      expect(match?.params).toEqual({ userId: 'u123', tabId: 'settings' });
-      expect(match?.query).toEqual({ sort: 'asc', view: 'card' });
-      expect(match?.path).toBe('/users/u123/tab/settings');
+      expect(match?.id).toBe('special');
+
+      const nonMatch = matchRoute(route, '/api/v1x0/doc(overview)');
+      expect(nonMatch).toBeNull();
     });
 
-    it('matches wildcard routes', () => {
-      const route = { id: 'catchall', pattern: '/files/*' };
-      const match = matchRoute(route, '/files/documents/2026/report.pdf');
+    it('matches wildcard and named wildcards correctly', () => {
+      const route1 = { id: 'catchall', pattern: '/assets/*' };
+      const match1 = matchRoute(route1, '/assets/images/icons/logo.png');
+      expect(match1?.params.wildcard).toBe('images/icons/logo.png');
 
-      expect(match).not.toBeNull();
-      expect(match?.params.wildcard).toBe('documents/2026/report.pdf');
+      const route2 = { id: 'named-wildcard', pattern: '/docs/*filepath' };
+      const match2 = matchRoute(route2, '/docs/guide/start.md');
+      expect(match2?.params.filepath).toBe('guide/start.md');
     });
 
-    it('builds URL from params and query and roundtrips safely', () => {
-      const route = { id: 'search', pattern: '/search/:category/:query' };
-      const url = buildRouteUrl(
-        route,
-        { category: 'electronics', query: 'audio pro' },
-        { page: '2', lang: 'en' }
+    it('builds route URLs and validates missing parameters', () => {
+      const route = { id: 'user-view', pattern: '/users/:userId/orders/:orderId' };
+
+      expect(() => buildRouteUrl(route, { userId: 'u1' })).toThrow(
+        /Missing route parameter: orderId/
       );
 
-      expect(url).toBe('/search/electronics/audio%20pro?page=2&lang=en');
+      const url = buildRouteUrl(
+        route,
+        { userId: 'alice', orderId: 'ord-99' },
+        { sort: 'desc' }
+      );
+      expect(url).toBe('/users/alice/orders/ord-99?sort=desc');
 
-      const match = matchRoute(route, url);
-      expect(match?.params).toEqual({ category: 'electronics', query: 'audio pro' });
-      expect(match?.query).toEqual({ page: '2', lang: 'en' });
+      const matched = matchRoute(route, url);
+      expect(matched?.params).toEqual({ userId: 'alice', orderId: 'ord-99' });
+      expect(matched?.query).toEqual({ sort: 'desc' });
     });
 
-    it('throws when required route parameter is missing during build', () => {
-      const route = { id: 'item', pattern: '/items/:itemId' };
-      expect(() => buildRouteUrl(route, {})).toThrow(/Missing route parameter: itemId/);
+    it('handles strict and appendUnmatchedParamsToQuery options in buildRouteUrl', () => {
+      const route = { id: 'simple', pattern: '/items/:id' };
+
+      expect(() =>
+        buildRouteUrl(route, { id: '10', unusedParam: 'foo' }, {}, { strict: true })
+      ).toThrow(/Unknown route parameter: unusedParam/);
+
+      const url = buildRouteUrl(
+        route,
+        { id: '10', extra: 'bar' },
+        {},
+        { appendUnmatchedParamsToQuery: true }
+      );
+      expect(url).toBe('/items/10?extra=bar');
     });
 
-    it('matches routes via FrnlRouter', () => {
+    it('prevents duplicate route IDs and duplicate route patterns in FrnlRouter', () => {
+      const router = new FrnlRouter();
+      router.addRoute({ id: 'r1', pattern: '/dashboard' });
+
+      // Duplicate ID
+      expect(() => router.addRoute({ id: 'r1', pattern: '/other' })).toThrow(
+        /Duplicate route id: r1/
+      );
+
+      // Conflicting pattern
+      expect(() => router.addRoute({ id: 'r2', pattern: '/dashboard' })).toThrow(
+        /Conflicting route pattern/
+      );
+    });
+
+    it('resolves routes lazily with load() in FrnlRouter', async () => {
       const router = new FrnlRouter([
-        { id: 'home', pattern: '/' },
-        { id: 'about', pattern: '/about' },
-        { id: 'post', pattern: '/posts/:id' },
+        {
+          id: 'lazy-data',
+          pattern: '/data/:id',
+          load: async () => ({ loaded: true, timestamp: 123456 }),
+        },
       ]);
 
-      expect(router.match('/about')?.id).toBe('about');
-      expect(router.match('/posts/42')?.params.id).toBe('42');
-      expect(router.match('/nonexistent')).toBeNull();
+      const resolution = await router.resolve('/data/42');
+      expect(resolution).not.toBeNull();
+      expect(resolution?.match.params.id).toBe('42');
+      expect(resolution?.data).toEqual({ loaded: true, timestamp: 123456 });
+
+      const missing = await router.resolve('/not-found');
+      expect(missing).toBeNull();
     });
   });
 
-  describe('Accessibility Validation', () => {
+  describe('6. Accessibility Validation', () => {
     it('detects missing accessible names for controls requiring them', () => {
       const issues = validateAccessibility(
         { role: 'button', nameRequired: true },
@@ -529,7 +633,65 @@ describe('FrnlTS Frontend Runtime', () => {
     });
   });
 
-  describe('Architecture & Public Exports Purity', () => {
+  describe('7. Semantic Store & Reactive State Invariants', () => {
+    it('registers entities, slots, and manages state propagation', () => {
+      const store = createFrnlStore();
+
+      store.getState().registerEntity('btn-primary', {
+        kind: 'primitive',
+        state: 'idle',
+        properties: { label: 'Submit' },
+      });
+
+      expect(store.getState().entities['btn-primary'].properties.label).toBe('Submit');
+
+      // Update property
+      store.getState().setEntityProperty('btn-primary', 'label', 'Saving...');
+      expect(store.getState().entities['btn-primary'].properties.label).toBe('Saving...');
+
+      // Transition entity state
+      store.getState().setEntityState('btn-primary', 'hovered');
+      expect(store.getState().entities['btn-primary'].state).toBe('hovered');
+
+      // Verify event was logged
+      const events = store.getState().events;
+      expect(events.some((e) => e.type === 'entity.stateChanged')).toBe(true);
+    });
+
+    it('manages repeatable slot collections and slot occupant replacement', () => {
+      const store = createFrnlStore();
+
+      store.getState().registerSlot('main-slot', {
+        id: 'main-slot',
+        address: 'page.body.slot',
+        occupantId: null,
+        occupantKind: null,
+        properties: {},
+      });
+
+      store.getState().replaceSlotOccupant('main-slot', {
+        id: 'card-view',
+        kind: 'composite',
+      });
+
+      expect(store.getState().slots['main-slot'].occupantId).toBe('card-view');
+
+      // Collections
+      store.getState().registerSlotCollection('toolbar-slots', {
+        address: 'page.header.toolbar',
+        slotIds: [],
+      });
+
+      store.getState().addSlotToCollection('toolbar-slots', 'slot-1');
+      store.getState().addSlotToCollection('toolbar-slots', 'slot-2');
+      expect(store.getState().slotCollections['toolbar-slots'].slotIds).toEqual(['slot-1', 'slot-2']);
+
+      store.getState().removeSlotFromCollection('toolbar-slots', 'slot-1');
+      expect(store.getState().slotCollections['toolbar-slots'].slotIds).toEqual(['slot-2']);
+    });
+  });
+
+  describe('8. Architecture & Public Package Exports Purity', () => {
     it('exports all runtime primitives from root and runtime subpaths', () => {
       expect(RootExports.createLifecycle).toBeDefined();
       expect(RootExports.createScope).toBeDefined();
@@ -544,7 +706,7 @@ describe('FrnlTS Frontend Runtime', () => {
       expect(RuntimeExports.createFrnlStore).toBeDefined();
     });
 
-    it('keeps React adapter separate with no React pollution in runtime', () => {
+    it('keeps React adapter separate with zero React pollution in core runtime', () => {
       expect(ReactExports.FrnlPrimitive).toBeDefined();
       expect(ReactExports.FrnlComposite).toBeDefined();
 

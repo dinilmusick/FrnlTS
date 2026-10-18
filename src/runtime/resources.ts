@@ -23,7 +23,7 @@ export interface ResourceController<T> {
 }
 
 export function defineResource<T>(resource: FrnlResource<T>): FrnlResource<T> {
-  if (!resource.id || typeof resource.id !== 'string') {
+  if (!resource || !resource.id || typeof resource.id !== 'string') {
     throw new TypeError('Invalid Frnl resource: missing valid id');
   }
   if (typeof resource.acquire !== 'function') {
@@ -37,6 +37,7 @@ interface InternalResourceState<T> {
   value: T | undefined;
   error: FrnlFault | undefined;
   inFlightPromise: Promise<T> | undefined;
+  inFlightReleasePromise: Promise<void> | undefined;
 }
 
 export function createResourceController<T>(
@@ -49,6 +50,7 @@ export function createResourceController<T>(
     value: undefined,
     error: undefined,
     inFlightPromise: undefined,
+    inFlightReleasePromise: undefined,
   };
 
   const context: ResourceContext = Object.freeze({
@@ -95,7 +97,11 @@ export function createResourceController<T>(
           const acquired = await Promise.resolve(resource.acquire(context));
           if (controller.signal.aborted || state.status === 'released') {
             if (resource.release && acquired !== undefined) {
-              await Promise.resolve(resource.release(acquired, context));
+              try {
+                await Promise.resolve(resource.release(acquired, context));
+              } catch {
+                // Ignore secondary release errors when already aborted
+              }
             }
             throw new FrnlFault({
               code: 'RESOURCE_ABORTED',
@@ -131,27 +137,44 @@ export function createResourceController<T>(
       if (state.status === 'released') {
         return;
       }
-      state.status = 'released';
-      controller.abort();
-
-      const previousValue = state.value;
-      state.value = undefined;
-
-      if (previousValue !== undefined && resource.release) {
-        try {
-          await Promise.resolve(resource.release(previousValue, context));
-        } catch (releaseErr) {
-          state.error =
-            releaseErr instanceof FrnlFault
-              ? releaseErr
-              : new FrnlFault({
-                  code: 'RESOURCE_RELEASE_FAILED',
-                  message: releaseErr instanceof Error ? releaseErr.message : String(releaseErr),
-                  cause: releaseErr,
-                });
-          throw state.error;
-        }
+      if (state.inFlightReleasePromise) {
+        return state.inFlightReleasePromise;
       }
+
+      state.inFlightReleasePromise = (async () => {
+        state.status = 'released';
+        controller.abort();
+
+        // If load is currently in flight, await it so it completes abort cleanup
+        if (state.inFlightPromise) {
+          try {
+            await state.inFlightPromise;
+          } catch {
+            // Expected abort rejection
+          }
+        }
+
+        const previousValue = state.value;
+        state.value = undefined;
+
+        if (previousValue !== undefined && resource.release) {
+          try {
+            await Promise.resolve(resource.release(previousValue, context));
+          } catch (releaseErr) {
+            state.error =
+              releaseErr instanceof FrnlFault
+                ? releaseErr
+                : new FrnlFault({
+                    code: 'RESOURCE_RELEASE_FAILED',
+                    message: releaseErr instanceof Error ? releaseErr.message : String(releaseErr),
+                    cause: releaseErr,
+                  });
+            throw state.error;
+          }
+        }
+      })();
+
+      return state.inFlightReleasePromise;
     },
   };
 }
@@ -160,21 +183,49 @@ export interface FrnlScope {
   readonly id: string;
   readonly parent?: FrnlScope;
   readonly signal: AbortSignal;
+  readonly isDisposed: boolean;
   add<T>(resource: FrnlResource<T>): ResourceController<T>;
   createChildScope(id: string): FrnlScope;
   dispose(): Promise<void>;
+  /** @internal */
+  _registerChild?(child: FrnlScope): void;
+  /** @internal */
+  _removeChild?(child: FrnlScope): void;
 }
 
 export function createScope(id: string, parent?: FrnlScope): FrnlScope {
+  if (parent && (parent.signal.aborted || parent.isDisposed)) {
+    throw new FrnlFault({
+      code: 'SCOPE_DISPOSED',
+      message: `Cannot create child scope from disposed parent '${parent.id}'`,
+    });
+  }
+
   const controller = new AbortController();
   const resources = new Set<ResourceController<unknown>>();
   const childScopes = new Set<FrnlScope>();
   let isDisposed = false;
+  let inFlightDisposePromise: Promise<void> | undefined;
 
   const scope: FrnlScope = {
     id,
     parent,
     signal: controller.signal,
+    get isDisposed() {
+      return isDisposed;
+    },
+
+    _registerChild(child: FrnlScope) {
+      if (isDisposed) {
+        void child.dispose();
+      } else {
+        childScopes.add(child);
+      }
+    },
+
+    _removeChild(child: FrnlScope) {
+      childScopes.delete(child);
+    },
 
     add<T>(resource: FrnlResource<T>): ResourceController<T> {
       if (controller.signal.aborted || isDisposed) {
@@ -195,30 +246,45 @@ export function createScope(id: string, parent?: FrnlScope): FrnlScope {
           message: `Cannot create child scope from disposed parent '${id}'`,
         });
       }
-      const child = createScope(childId, scope);
-      childScopes.add(child);
-      return child;
+      return createScope(childId, scope);
     },
 
     async dispose(): Promise<void> {
       if (isDisposed) {
         return;
       }
-      isDisposed = true;
-      if (!controller.signal.aborted) {
-        controller.abort();
+      if (inFlightDisposePromise) {
+        return inFlightDisposePromise;
       }
 
-      // Concurrently dispose all child scopes and release all owned resources
-      const childPromises = [...childScopes].map((child) => child.dispose());
-      const resourcePromises = [...resources].map((res) => res.release());
+      inFlightDisposePromise = (async () => {
+        isDisposed = true;
+        if (!controller.signal.aborted) {
+          controller.abort();
+        }
 
-      childScopes.clear();
-      resources.clear();
+        // Notify parent to unregister this child to prevent memory leaks
+        if (parent?._removeChild) {
+          parent._removeChild(scope);
+        }
 
-      await Promise.allSettled([...childPromises, ...resourcePromises]);
+        // Concurrently dispose all child scopes and release all owned resources
+        const childPromises = [...childScopes].map((child) => child.dispose());
+        const resourcePromises = [...resources].map((res) => res.release());
+
+        childScopes.clear();
+        resources.clear();
+
+        await Promise.allSettled([...childPromises, ...resourcePromises]);
+      })();
+
+      return inFlightDisposePromise;
     },
   };
+
+  if (parent?._registerChild) {
+    parent._registerChild(scope);
+  }
 
   if (parent) {
     parent.signal.addEventListener('abort', () => void scope.dispose(), { once: true });

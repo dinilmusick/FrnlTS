@@ -189,5 +189,6 @@ export function Shell({ content }: { content: React.ReactNode }) {
 
 The package is strictly ESM and separates the renderer-agnostic core from the React asset adapter:
 
-- `.` (`@dinilmusick/frnlts`): Core runtime, store factory, validation schemas, and types.
-- `./react` (`@dinilmusick/frnlts/react`): React components (`FrnlPrimitive`, `FrnlComposite`, `FrnlSlot`) and React prop validators.
+- `.` (`@dinilmusick/frnlts`): Complete semantic framework and runtime exports.
+- `./runtime` (`@dinilmusick/frnlts/runtime`): Headless frontend runtime entry point (`createLifecycle`, `createScope`, `defineResource`, `FrnlRegistry`, `DependencyGraph`, `matchRoute`, `buildRouteUrl`, `FrnlRouter`, `validateAccessibility`).
+- `./react` (`@dinilmusick/frnlts/react`): React adapter components (`FrnlPrimitive`, `FrnlComposite`, `FrnlSlot`) and React prop validators.

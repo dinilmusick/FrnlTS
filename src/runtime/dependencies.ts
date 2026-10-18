@@ -1,11 +1,15 @@
+import type { FrnlCapability } from './core.js';
+
 export interface DependencyNode {
   readonly id: string;
+  readonly version?: number;
   readonly requires?: readonly string[];
   readonly provides?: readonly string[];
 }
 
 export class DependencyGraph {
   private readonly nodes = new Map<string, DependencyNode>();
+  private readonly providers = new Map<string, Set<string>>(); // capability -> set of nodeIds
 
   register(node: DependencyNode): void {
     if (!node || !node.id || typeof node.id !== 'string') {
@@ -14,7 +18,25 @@ export class DependencyGraph {
     if (this.nodes.has(node.id)) {
       throw new Error(`Duplicate dependency node: ${node.id}`);
     }
-    this.nodes.set(node.id, Object.freeze({ ...node }));
+
+    const frozen = Object.freeze({ ...node });
+    this.nodes.set(node.id, frozen);
+
+    for (const prov of node.provides ?? []) {
+      if (!this.providers.has(prov)) {
+        this.providers.set(prov, new Set());
+      }
+      this.providers.get(prov)!.add(node.id);
+    }
+  }
+
+  registerCapability(capability: FrnlCapability): void {
+    this.register({
+      id: capability.id,
+      version: capability.version,
+      requires: capability.requires,
+      provides: capability.provides,
+    });
   }
 
   get(id: string): DependencyNode | undefined {
@@ -25,11 +47,23 @@ export class DependencyGraph {
     return [...this.nodes.values()];
   }
 
+  resolveDependencyNodeId(dependencyName: string): string | undefined {
+    if (this.nodes.has(dependencyName)) {
+      return dependencyName;
+    }
+    const provSet = this.providers.get(dependencyName);
+    if (provSet && provSet.size > 0) {
+      return [...provSet][0];
+    }
+    return undefined;
+  }
+
   validate(): string[] {
     const errors: string[] = [];
     for (const node of this.nodes.values()) {
       for (const req of node.requires ?? []) {
-        if (!this.nodes.has(req)) {
+        const resolvedId = this.resolveDependencyNodeId(req);
+        if (!resolvedId) {
           errors.push(`${node.id} requires missing dependency ${req}`);
         }
       }
@@ -53,9 +87,10 @@ export class DependencyGraph {
 
       visiting.add(id);
       const node = this.nodes.get(id);
-      for (const dep of node?.requires ?? []) {
-        if (this.nodes.has(dep)) {
-          visit(dep, [...path, id]);
+      for (const req of node?.requires ?? []) {
+        const resolvedId = this.resolveDependencyNodeId(req);
+        if (resolvedId && this.nodes.has(resolvedId)) {
+          visit(resolvedId, [...path, id]);
         }
       }
       visiting.delete(id);
@@ -72,5 +107,14 @@ export class DependencyGraph {
 
   clear(): void {
     this.nodes.clear();
+    this.providers.clear();
+  }
+
+  static fromCapabilities(capabilities: readonly FrnlCapability[]): DependencyGraph {
+    const graph = new DependencyGraph();
+    for (const cap of capabilities) {
+      graph.registerCapability(cap);
+    }
+    return graph;
   }
 }
