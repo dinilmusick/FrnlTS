@@ -1,1 +1,84 @@
-import type { FrnlCapability, FrnlContract } from './kernel.js';\nexport interface FrnlRegistration{readonly id:string;readonly version:number;readonly contract?:FrnlContract;readonly capabilities?:readonly FrnlCapability[];readonly value:unknown}\nexport class FrnlRegistry{\n private readonly entries=new Map<string,FrnlRegistration>();\n register(entry:FrnlRegistration):void{if(!entry.id||!Number.isInteger(entry.version)||entry.version<1)throw new TypeError('Invalid registry entry');const current=this.entries.get(entry.id);if(current&&current.version>entry.version)throw new Error('Cannot register older version of '+entry.id);this.entries.set(entry.id,Object.freeze({...entry}));}\n has(id:string){return this.entries.has(id)}\n resolve<T=unknown>(id:string):T{const e=this.entries.get(id);if(!e)throw new Error('Frnl registration not found: '+id);return e.value as T}\n get(id:string){return this.entries.get(id)}\n list():readonly FrnlRegistration[]{return [...this.entries.values()]}\n requireCapabilities(id:string,available:Iterable<string>):void{const e=this.entries.get(id);if(!e)throw new Error('Frnl registration not found: '+id);const set=new Set(available);for(const c of e.contract?.capabilities??[])if(!set.has(c))throw new Error('Missing capability '+c+' for '+id)}\n}
+import type { FrnlCapability, FrnlContract } from './core.js';
+
+export interface FrnlRegistration {
+  readonly id: string;
+  readonly version: number;
+  readonly contract?: FrnlContract;
+  readonly capabilities?: readonly FrnlCapability[];
+  readonly value: unknown;
+}
+
+export class FrnlRegistry {
+  private readonly entries = new Map<string, FrnlRegistration>();
+
+  register(entry: FrnlRegistration): void {
+    if (!entry || !entry.id || typeof entry.id !== 'string') {
+      throw new TypeError('Invalid registry entry: id must be a non-empty string');
+    }
+    if (!Number.isInteger(entry.version) || entry.version < 1) {
+      throw new TypeError(
+        `Invalid registry entry '${entry.id}': version must be a positive integer, received ${entry.version}`
+      );
+    }
+
+    const current = this.entries.get(entry.id);
+    if (current && current.version > entry.version) {
+      throw new Error(
+        `Cannot register older version (${entry.version}) of '${entry.id}'. Active version is ${current.version}.`
+      );
+    }
+
+    this.entries.set(entry.id, Object.freeze({ ...entry }));
+  }
+
+  has(id: string): boolean {
+    return this.entries.has(id);
+  }
+
+  get(id: string): FrnlRegistration | undefined {
+    return this.entries.get(id);
+  }
+
+  resolve<T = unknown>(id: string): T {
+    const entry = this.entries.get(id);
+    if (!entry) {
+      throw new Error(`Frnl registration not found: ${id}`);
+    }
+    return entry.value as T;
+  }
+
+  list(): readonly FrnlRegistration[] {
+    return [...this.entries.values()];
+  }
+
+  requireCapabilities(id: string, available: Iterable<string>): void {
+    const entry = this.entries.get(id);
+    if (!entry) {
+      throw new Error(`Frnl registration not found: ${id}`);
+    }
+
+    const availableSet = new Set(available);
+    const required: string[] = [];
+
+    if (entry.contract?.capabilities) {
+      required.push(...entry.contract.capabilities);
+    }
+    if (entry.capabilities) {
+      for (const cap of entry.capabilities) {
+        if (cap.requires) {
+          required.push(...cap.requires);
+        }
+      }
+    }
+
+    for (const cap of required) {
+      if (!availableSet.has(cap)) {
+        throw new Error(`Missing capability '${cap}' for registration '${id}'`);
+      }
+    }
+  }
+
+  clear(): void {
+    this.entries.clear();
+  }
+}

@@ -1,1 +1,228 @@
-import { FrnlFault } from './kernel.js';\nexport interface ResourceContext { readonly signal:AbortSignal; readonly scopeId:string; }\nexport interface FrnlResource<T>{readonly id:string;readonly acquire:(context:ResourceContext)=>Promise<T>|T;readonly release?:(value:T,context:ResourceContext)=>Promise<void>|void}\nexport type ResourceStatus='idle'|'loading'|'ready'|'error'|'released';\nexport interface ResourceController<T>{readonly id:string;readonly status:ResourceStatus;readonly value?:T;readonly error?:FrnlFault;load():Promise<T>;release():Promise<void>}\nexport function defineResource<T>(r:FrnlResource<T>):FrnlResource<T>{if(!r.id||typeof r.acquire!=='function')throw new TypeError('Invalid Frnl resource');return Object.freeze(r);}\nexport function createResourceController<T>(r:FrnlResource<T>,scopeId:string):ResourceController<T>{\n const controller=new AbortController();let status:ResourceStatus='idle';let value:T|undefined;let error:FrnlFault|undefined;let promise:Promise<T>|undefined;\n return {id:r.id,get status(){return status},get value(){return value},get error(){return error},async load(){\n  if(status==='ready')return value as T;if(status==='loading'&&promise)return promise;if(status==='released')throw new FrnlFault({code:'RESOURCE_RELEASED',message:'Resource '+r.id+' has been released'});status='loading';\n  promise=Promise.resolve(r.acquire({signal:controller.signal,scopeId})).then(v=>{value=v;status='ready';return v}).catch(c=>{error=c instanceof FrnlFault?c:new FrnlFault({code:'RESOURCE_ACQUIRE_FAILED',message:String(c),retryable:true,cause:c});status='error';throw error});return promise;\n },async release(){if(status==='released')return;controller.abort();if(value!==undefined&&r.release)await r.release(value,{signal:controller.signal,scopeId});value=undefined;status='released';}};\n}\nexport interface FrnlScope{readonly id:string;readonly parent?:FrnlScope;readonly signal:AbortSignal;add<T>(r:FrnlResource<T>):ResourceController<T>;dispose():Promise<void>}\nexport function createScope(id:string,parent?:FrnlScope):FrnlScope{\n const controller=new AbortController();const resources=new Set<ResourceController<unknown>>();if(parent)parent.signal.addEventListener('abort',()=>controller.abort(),{once:true});\n return {id,parent,signal:controller.signal,add(r){if(controller.signal.aborted)throw new FrnlFault({code:'SCOPE_DISPOSED',message:'Scope '+id+' is disposed'});const c=createResourceController(r,id);resources.add(c as ResourceController<unknown>);return c;},async dispose(){if(!controller.signal.aborted)controller.abort();await Promise.all([...resources].map(r=>r.release()));resources.clear();}};\n}
+import { FrnlFault } from './core.js';
+
+export interface ResourceContext {
+  readonly signal: AbortSignal;
+  readonly scopeId: string;
+}
+
+export interface FrnlResource<T> {
+  readonly id: string;
+  readonly acquire: (context: ResourceContext) => Promise<T> | T;
+  readonly release?: (value: T, context: ResourceContext) => Promise<void> | void;
+}
+
+export type ResourceStatus = 'idle' | 'loading' | 'ready' | 'error' | 'released';
+
+export interface ResourceController<T> {
+  readonly id: string;
+  readonly status: ResourceStatus;
+  readonly value?: T;
+  readonly error?: FrnlFault;
+  load(): Promise<T>;
+  release(): Promise<void>;
+}
+
+export function defineResource<T>(resource: FrnlResource<T>): FrnlResource<T> {
+  if (!resource.id || typeof resource.id !== 'string') {
+    throw new TypeError('Invalid Frnl resource: missing valid id');
+  }
+  if (typeof resource.acquire !== 'function') {
+    throw new TypeError(`Invalid Frnl resource '${resource.id}': acquire must be a function`);
+  }
+  return Object.freeze({ ...resource });
+}
+
+interface InternalResourceState<T> {
+  status: ResourceStatus;
+  value: T | undefined;
+  error: FrnlFault | undefined;
+  inFlightPromise: Promise<T> | undefined;
+}
+
+export function createResourceController<T>(
+  resource: FrnlResource<T>,
+  scopeId: string
+): ResourceController<T> {
+  const controller = new AbortController();
+  const state: InternalResourceState<T> = {
+    status: 'idle',
+    value: undefined,
+    error: undefined,
+    inFlightPromise: undefined,
+  };
+
+  const context: ResourceContext = Object.freeze({
+    signal: controller.signal,
+    scopeId,
+  });
+
+  return {
+    id: resource.id,
+    get status() {
+      return state.status;
+    },
+    get value() {
+      return state.value;
+    },
+    get error() {
+      return state.error;
+    },
+    async load(): Promise<T> {
+      if (state.status === 'ready') {
+        return state.value as T;
+      }
+      if (state.status === 'loading' && state.inFlightPromise) {
+        return state.inFlightPromise;
+      }
+      if (state.status === 'released') {
+        throw new FrnlFault({
+          code: 'RESOURCE_RELEASED',
+          message: `Resource '${resource.id}' has already been released`,
+        });
+      }
+      if (controller.signal.aborted) {
+        throw new FrnlFault({
+          code: 'RESOURCE_ABORTED',
+          message: `Resource '${resource.id}' acquisition aborted`,
+        });
+      }
+
+      state.status = 'loading';
+      state.error = undefined;
+
+      state.inFlightPromise = (async () => {
+        try {
+          const acquired = await Promise.resolve(resource.acquire(context));
+          if (controller.signal.aborted || state.status === 'released') {
+            if (resource.release && acquired !== undefined) {
+              await Promise.resolve(resource.release(acquired, context));
+            }
+            throw new FrnlFault({
+              code: 'RESOURCE_ABORTED',
+              message: `Resource '${resource.id}' acquired after abort or release`,
+            });
+          }
+          state.value = acquired;
+          state.status = 'ready';
+          return acquired;
+        } catch (err) {
+          if (state.status !== 'released') {
+            state.status = 'error';
+            state.error =
+              err instanceof FrnlFault
+                ? err
+                : new FrnlFault({
+                    code: 'RESOURCE_ACQUIRE_FAILED',
+                    message: err instanceof Error ? err.message : String(err),
+                    retryable: true,
+                    cause: err,
+                  });
+          }
+          throw state.error ?? err;
+        } finally {
+          state.inFlightPromise = undefined;
+        }
+      })();
+
+      return state.inFlightPromise;
+    },
+
+    async release(): Promise<void> {
+      if (state.status === 'released') {
+        return;
+      }
+      state.status = 'released';
+      controller.abort();
+
+      const previousValue = state.value;
+      state.value = undefined;
+
+      if (previousValue !== undefined && resource.release) {
+        try {
+          await Promise.resolve(resource.release(previousValue, context));
+        } catch (releaseErr) {
+          state.error =
+            releaseErr instanceof FrnlFault
+              ? releaseErr
+              : new FrnlFault({
+                  code: 'RESOURCE_RELEASE_FAILED',
+                  message: releaseErr instanceof Error ? releaseErr.message : String(releaseErr),
+                  cause: releaseErr,
+                });
+          throw state.error;
+        }
+      }
+    },
+  };
+}
+
+export interface FrnlScope {
+  readonly id: string;
+  readonly parent?: FrnlScope;
+  readonly signal: AbortSignal;
+  add<T>(resource: FrnlResource<T>): ResourceController<T>;
+  createChildScope(id: string): FrnlScope;
+  dispose(): Promise<void>;
+}
+
+export function createScope(id: string, parent?: FrnlScope): FrnlScope {
+  const controller = new AbortController();
+  const resources = new Set<ResourceController<unknown>>();
+  const childScopes = new Set<FrnlScope>();
+  let isDisposed = false;
+
+  const scope: FrnlScope = {
+    id,
+    parent,
+    signal: controller.signal,
+
+    add<T>(resource: FrnlResource<T>): ResourceController<T> {
+      if (controller.signal.aborted || isDisposed) {
+        throw new FrnlFault({
+          code: 'SCOPE_DISPOSED',
+          message: `Scope '${id}' has been disposed`,
+        });
+      }
+      const resCtrl = createResourceController(resource, id);
+      resources.add(resCtrl as ResourceController<unknown>);
+      return resCtrl;
+    },
+
+    createChildScope(childId: string): FrnlScope {
+      if (controller.signal.aborted || isDisposed) {
+        throw new FrnlFault({
+          code: 'SCOPE_DISPOSED',
+          message: `Cannot create child scope from disposed parent '${id}'`,
+        });
+      }
+      const child = createScope(childId, scope);
+      childScopes.add(child);
+      return child;
+    },
+
+    async dispose(): Promise<void> {
+      if (isDisposed) {
+        return;
+      }
+      isDisposed = true;
+      if (!controller.signal.aborted) {
+        controller.abort();
+      }
+
+      // Concurrently dispose all child scopes and release all owned resources
+      const childPromises = [...childScopes].map((child) => child.dispose());
+      const resourcePromises = [...resources].map((res) => res.release());
+
+      childScopes.clear();
+      resources.clear();
+
+      await Promise.allSettled([...childPromises, ...resourcePromises]);
+    },
+  };
+
+  if (parent) {
+    parent.signal.addEventListener('abort', () => void scope.dispose(), { once: true });
+  }
+
+  return scope;
+}

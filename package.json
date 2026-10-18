@@ -4,22 +4,63 @@
   "private": false,
   "type": "module",
   "description": "FrnlTS semantic frontend runtime and renderer adapters.",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "exports": {
-    ".": {"types":"./dist/index.d.ts","import":"./dist/index.js","default":"./dist/index.js"},
-    "./react": {"types":"./dist/react/index.d.ts","import":"./dist/react/index.js","default":"./dist/react/index.js"},
-    "./runtime": {"types":"./dist/runtime/index.d.ts","import":"./dist/runtime/index.js","default":"./dist/runtime/index.js"}
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js",
+      "default": "./dist/react/index.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime/index.d.ts",
+      "import": "./dist/runtime/index.js",
+      "default": "./dist/runtime/index.js"
+    }
   },
   "scripts": {
     "build": "tsup src/index.ts src/react/index.ts src/runtime/index.ts --format esm --dts --clean --external react --external react-dom",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {"zod":"^3.25.0","zustand":"^5.0.3"},
-  "devDependencies": {"@testing-library/jest-dom":"^7.0.1","@testing-library/react":"^16.3.3","@types/react":"^19.0.0","@types/react-dom":"^19.0.0","happy-dom":"^21.0.3","react":"^19.0.1","react-dom":"^19.0.1","tsup":"^8.4.0","typescript":"^5.7.3","vitest":"^3.1.0"},
-  "packageManager":"pnpm@9.15.0",
-  "engines":{"node":">=20.0.0"},
-  "repository":{"type":"git","url":"git+https://github.com/dinilmusick/FrnlTS.git"},
-  "publishConfig":{"access":"public","registry":"https://registry.npmjs.org/"},
-  "main":"./dist/index.js","module":"./dist/index.js","types":"./dist/index.d.ts","files":["dist"],
-  "peerDependencies":{"react":"^18.0.0 || ^19.0.0"}
+  "dependencies": {
+    "zod": "^3.25.0",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "happy-dom": "^21.0.3",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1",
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.1.0"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dinilmusick/FrnlTS.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "packageManager": "pnpm@9.15.0"
 }
