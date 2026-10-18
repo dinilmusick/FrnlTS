@@ -1,6 +1,6 @@
 {
   "name": "@dinilmusick/frnlts",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": false,
   "type": "module",
   "description": "FrnlTS semantic frontend runtime and renderer adapters.",
