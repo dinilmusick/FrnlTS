@@ -1,8 +1,8 @@
 # FrnlTS (`@dinilmusick/frnlts`)
 
-> **The Frontend Semantic Framework Counterpart to KrnlTS.**
+> **A semantic frontend framework for defining and running Frnl Elements.**
 
-Where **KrnlTS** defines the semantic framework for backend services, entities, and orchestrations, **FrnlTS** provides the renderer-independent, predictable semantic model for frontend user interfaces.
+FrnlTS defines frontend/UI semantics, element structure, state behavior, visual definitions, and runtime boundaries. It is an independent frontend architecture within the Krusbl ecosystem.
 
 ---
 
@@ -16,8 +16,8 @@ Backend                                      Frontend
 
 KrnlTS                                       FrnlTS
   │                                            │
-  │ Service                                    │ UI Primitive
-  │ Service                                    │ UI Composite
+  │ Service                                    │ FrnlPrimitive
+  │ Service                                    │ FrnlComposite
   │ Orchestration                              │ Slot
   │ State                                      │ State
   │ Events                                     │ Events
@@ -45,7 +45,7 @@ Applications                                 Applications
    Input               Rich Control
 ```
 
-- **FrnlTS defines what UI entities mean.** (Semantic model, runtime state, and validation boundaries).
+- **FrnlTS defines what frontend Elements mean.** (Semantic model, runtime state, and validation boundaries).
 - **Floks defines which concrete UI elements exist.** (Reusable UI component library built on FrnlTS contracts).
 - **Applications compose those elements.** (Application-specific screens and workspaces).
 
