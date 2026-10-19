@@ -27,17 +27,9 @@ export const frnlThemeDefinitionSchema = z.record(
   frnlThemeComponentSchema,
 );
 
-export const visualAssetSchema = z.object({
-  id: z.string().min(1),
-  type: z.string().min(1),
-  properties: propertiesSchema.optional(),
-  clipped: z.boolean().optional(),
-});
-
 export const entityStateSchema = z.object({
   state: stateNameSchema,
   properties: propertiesSchema,
-  assets: z.array(visualAssetSchema).optional(),
 });
 
 export const entityStateChangedPayloadSchema = z.object({
@@ -66,7 +58,6 @@ export const frnlEventSchema = z.discriminatedUnion('type', [
 ]);
 
 export type EntityState = z.infer<typeof entityStateSchema>;
-export type VisualAsset = z.infer<typeof visualAssetSchema>;
 export type FrnlEventPayload = z.infer<typeof frnlEventSchema>;
 export type FrnlEvent = z.infer<typeof frnlEventSchema>;
 
