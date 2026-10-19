@@ -13,6 +13,21 @@ export const propertyKeySchema = z.string().min(1);
 export const propertyValueSchema = z.unknown();
 export const propertiesSchema = z.record(z.string(), propertyValueSchema);
 
+/** Optional visual overrides registered under a theme's component and state names. */
+export const frnlThemeStateSchema = z.object({
+  visualParameters: propertiesSchema.optional(),
+}).strict();
+
+export const frnlThemeComponentSchema = z.object({
+  states: z.record(z.string().min(1), frnlThemeStateSchema).optional(),
+}).strict();
+
+/** Themes are data-only maps: component name -> state name -> visual parameters. */
+export const frnlThemeDefinitionSchema = z.record(
+  z.string().min(1),
+  frnlThemeComponentSchema,
+);
+
 export const boundsSchema = z.object({
   width: z.union([z.string(), z.number()]).optional(),
   height: z.union([z.string(), z.number()]).optional(),
