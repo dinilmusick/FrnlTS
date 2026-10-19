@@ -108,6 +108,50 @@ describe('Frnl component themes', () => {
     expect(resolveFrnlVisualParameters(store, 'button')).toEqual({ opacity: 0.9, scale: 1 });
   });
 
+  it('falls back to state visuals when the theme omits the component entirely', () => {
+    const store = createFrnlStore();
+    store.getState().registerEntity('button', { kind: 'primitive', state: 'Idle', properties: {} });
+    store.getState().registerElementDefinition('button', definition);
+    registerFrnlTheme(store, 'Minimal', {
+      OtherComponent: { states: { Idle: { visualParameters: { opacity: 0.2 } } } },
+    });
+
+    applyFrnlTheme(store, 'button', 'Minimal');
+
+    expect(resolveFrnlVisualParameters(store, 'button')).toEqual({ opacity: 1, scale: 1 });
+  });
+
+  it('gives surgical instance overrides priority over theme values', () => {
+    const store = createFrnlStore();
+    store.getState().registerEntity('button', { kind: 'primitive', state: 'Idle', properties: {} });
+    store.getState().registerElementDefinition('button', definition);
+    registerFrnlTheme(store, 'Dark', {
+      Button: { states: { Idle: { visualParameters: { opacity: 0.4, scale: 0.9 } } },
+      },
+    });
+
+    applyFrnlTheme(store, 'button', 'Dark');
+    setFrnlVisualParameter(store, 'button.opacity', 0.1);
+    setFrnlVisualParameter(store, 'button.custom', 'instance');
+
+    expect(resolveFrnlVisualParameters(store, 'button')).toEqual({
+      opacity: 0.1,
+      scale: 0.9,
+      custom: 'instance',
+    });
+  });
+
+  it('rejects themes that reference unknown states for registered element definitions', () => {
+    const store = createFrnlStore();
+    store.getState().registerEntity('button', { kind: 'primitive', state: 'Idle', properties: {} });
+    store.getState().registerElementDefinition('button', definition);
+
+    expect(() => registerFrnlTheme(store, 'Invalid', {
+      Button: { states: { Missing: { visualParameters: { opacity: 0.3 } } } },
+    })).toThrow('references unknown state "Missing"');
+    expect(store.getState().themes.Invalid).toBeUndefined();
+  });
+
   it('rejects applying an unregistered theme', () => {
     const store = createFrnlStore();
     store.getState().registerEntity('button', { kind: 'primitive', state: 'Idle', properties: {} });
