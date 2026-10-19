@@ -2,7 +2,7 @@
 
 > A semantic frontend runtime for ordinary React components.
 
-FrnlTS does not wrap React components in primitive/composite classes, renderer classes, or adapter component hierarchies. The React component is the component. FrnlTS attaches state, state-resolved events, visual definitions, themes, slots, flows, and runtime lifecycle machinery to that component.
+FrnlTS does not wrap React components in semantic classes, renderer classes, or adapter component hierarchies. The React component is the component. FrnlTS attaches state, state-resolved events, visual definitions, themes, slots, flows, and runtime lifecycle machinery to that component.
 
 ## Architectural role
 
