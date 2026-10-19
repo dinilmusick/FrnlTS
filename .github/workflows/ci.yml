@@ -44,11 +44,13 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      # Workspace packages expose dist/ entry points. Build those before tests
+      # that import the validator package through its public workspace export.
+      - name: Build packages
+        run: pnpm -r build && pnpm build
+
       - name: Run Vitest Suite
         run: pnpm test
-
-      - name: Build packages
-        run: pnpm build
 
       - name: Dry-run package pack
         run: npm pack --dry-run
