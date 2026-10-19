@@ -61,7 +61,7 @@ React owns children, composition, layout, positioning, dimensions, and DOM bound
 
 ## Flows
 
-Flows coordinate component events, slot events, state transitions, property changes, data operations, and external functions. A flow is orchestration data/runtime, not another UI component type.
+Flows coordinate component events, state transitions, property changes, data operations, and external functions. A flow is orchestration data/runtime, not another UI component type.
 
 ## Temporal model
 
