@@ -1,174 +1,104 @@
-# FrnlTS (`@dinilmusick/frnlts`)
+# FrnlTS (@dinilmusick/frnlts)
 
-> **A semantic frontend framework for defining and running Frnl Elements.**
+> A semantic frontend runtime for ordinary React components.
 
-FrnlTS defines frontend/UI semantics, element structure, state behavior, visual definitions, and runtime boundaries. A Frnl component is the React component itself; FrnlTS does not wrap React components in semantic classes or adapter components. It is an independent frontend architecture within the Krusbl ecosystem.
+FrnlTS does not wrap React components in primitive/composite classes, renderer classes, or adapter component hierarchies. The React component is the component. FrnlTS attaches state, state-resolved events, visual definitions, themes, slots, flows, and runtime lifecycle machinery to that component.
 
----
+## Architectural role
 
-## Architectural Role in the Krusbl Ecosystem
-
-```text
-                    Krusbl Ecosystem
-
-Backend                                      Frontend
-───────                                      ────────
-
-KrnlTS                                       FrnlTS
-  │                                            │
-  │ Service                                    │ React Components
-  │ Service                                    │ Frnl State
-  │ Orchestration                              │ Frnl Events
-  │ State                                      │ Slots
-  │ Events                                     │ Flows
-  ▼                                            ▼
-Applications                                 Applications
-
-
-                        Concrete Libraries
-
-              KrnlTS  →  Depm/etc.
-
-              FrnlTS
-                 │
-                 ▼
-               Floks
-                 │
-       ┌─────────┴─────────┐
-       │                   │
-   UI Primitive        UI Composite
-       │                   │
-   Simple Button       Complex Button
-   Icon                Dialog Button
-   Badge               Split Button
-   Input               Rich Control
-```
-
-- **FrnlTS defines what frontend Elements mean.** (Semantic model, runtime state, and validation boundaries).
-- **Floks defines which concrete UI elements exist.** (Reusable UI component library built on FrnlTS contracts).
-- **Applications compose those elements.** (Application-specific screens and workspaces).
-
----
-
-## Core Semantic Model
-
-FrnlTS is built around two first-class foundational UI entities:
-
-1. **UI Primitive**
-   - Atomic visual and interactive entity.
-   - Owns **Bounds**, **Visual Assets**, **Properties**, **States**, and **Events**.
-   - Interaction is strictly evaluated against Bounds.
-2. **UI Composite**
-   - Structural and logical grouping entity.
-   - Owns **named Slots**, **Properties**, **States**, and **Flows**.
-   - Does **not** own Visual Assets (rendering is provided by contained Primitives).
-   - Recursive: a Slot can contain either a UI Primitive or another UI Composite.
-
-### Key Concepts
-
-- **Slots**: Addressable live positions inside a Composite. Can hold either a Primitive or Composite. Supports real-time occupant replacement while preserving Slot identity, address, properties, and event interface.
-- **Repeatable Slot Collections**: Named families of Slot instances (e.g., `Page.items[0]`, `Page.items[1]`) that can dynamically grow, shrink, or reorder at runtime.
-- **States & Curves**: Named states evaluated using normalized 1-second domain Curves with Attack, Sustain, Release temporal semantics.
-- **Events & Flows**: Primitives own Events. Slots own Slot Events (`stateChanged`, `occupantChanged`, `propertyChanged`). Composites own Flows that coordinate events, state changes, slot occupants, and external actions.
-- **Hierarchical Addressability**: Semantic addresses such as `DashboardPage.content.overview.actions.save`.
-
----
-
-## Zod Runtime Validation Architecture
-
-TypeScript types are verified at compile time, but **all external semantic inputs, property updates, and event payloads cross a Zod validation boundary** before entering the runtime:
-
-```text
-external input / event
-        ↓
-  Zod validation
-        ↓
-validated semantic data
-        ↓
-Zustand runtime (component state / Slot / Event / Flow)
-```
-
-- `createFrnlStore(initial?)`: strictly validates initial entities and slots.
-- `emit(event)`: validates events against the canonical discriminated union `frnlEventSchema`.
-- `setEntityState`, `setEntityProperty`, `setSlotProperty`: validate IDs, keys, and values.
-- `replaceSlotOccupant`: validates occupant descriptors and emits validated `slot.occupantChanged`.
-- Entity state transitions automatically emit `slot.stateChanged` for occupying slots.
-
----
-
-## Installation & Usage
-
-```bash
-pnpm add @dinilmusick/frnlts zustand zod
-```
-
-### 1. Direct Frnl React Components
-
-A Frnl component is the React component itself. FrnlTS does not wrap a React component in a semantic class, primitive, composite, renderer, or executor.
-
-Use `useFrnlComponent()` inside the concrete React component. The hook attaches the component instance to the Zustand-backed Frnl store and exposes its addressable Frnl events.
+FrnlTS supplies frontend semantics and runtime machinery. Floks supplies concrete React UI components. Applications compose those ordinary React components.
 
 ```text
 React component
     │
-    ├── normal React props/events
-    ├── Frnl state
-    ├── Frnl visual definitions
-    └── Frnl events
-            │
-            ▼
-       Zustand store
+    ├── normal React props/rendering
+    ├── useFrnlComponent()
+    │      ├── Frnl state
+    │      ├── state-resolved events
+    │      ├── visual parameters
+    │      └── component scope
+    └── FrnlSlot where structural composition is required
+             │
+             ▼
+        Zustand-backed runtime
 ```
 
-### 2. Addressable Frnl Events
+There is one component model. A component may render children, use slots, participate in flows, or be nested in another component without acquiring a second runtime class.
 
-React events are entry points into the component's Frnl events. The same Frnl event can be invoked from another component, a keyboard binding, or application code:
+## Core semantic model
 
-```typescript
-getFrnlEvent(store, 'action-button', 'click')(payload);
+- **React components** are the concrete UI entities.
+- **States** own state-local events, visual parameters, and Attack/Sustain/Release definitions.
+- **Events** resolve against the component's current state before invoking the registered handler.
+- **Slots** are stable addressable layout/replacement boundaries for rendered component content.
+- **Flows** coordinate events, state changes, slot changes, data, and external functions.
+- **Themes** provide optional visual parameter overrides for named components and states.
+- **Libraries** provide centrally addressable component/application functions and data.
+
+## Direct React integration
+
+Use `useFrnlComponent()` inside the actual React component:
+
+```tsx
+const frnl = useFrnlComponent({
+  id,
+  definition,
+  store,
+  state: 'idle',
+  handlers,
+});
+
+return <button onClick={() => frnl.events.click()}>{children}</button>;
 ```
 
-Resolution is state-dependent:
+The hook registers the component with the Frnl runtime and cleans it up when the React component unmounts. No Frnl wrapper object or rendering class is required.
+
+## Event resolution
+
+Every input path should converge on the same semantic event:
 
 ```text
-React event / keyboard / application code
-                 ↓
-        component → Frnl event
-                 ↓
-          current Frnl state
-                 ↓
-          state.events[event]
-                 ↓
-          functionId → handler
+React input / keyboard / application code / another component
+                         ↓
+                  component event
+                         ↓
+                  current state
+                         ↓
+                  state.events[event]
+                         ↓
+                   functionId
+                         ↓
+                    handler
 ```
 
-### 3. Slots
+The input source does not directly own the handler implementation.
 
-`FrnlSlot` is itself a React component backed by the Frnl store. It provides stable addressable positions and live occupant replacement without wrapping the occupant component.
+## Slots
 
-### 4. Component Themes
+`FrnlSlot` is a React component backed by the same store. It provides a stable address, slot properties, occupant replacement, and slot lifecycle events without wrapping the occupant component.
 
-Themes are visual data applied to Frnl component instances. A theme is identified by name and contains optional component/state visual parameter overrides; omitted values fall back to the component state's own visual parameters.
+## Themes
+
+Theme values are resolved in this order:
 
 ```text
-Component State Visual Parameters (Fallback)
-    │
-    ▼
-Optional Theme Visual Values
-    │
-    ▼
-Surgical Instance Visual Overrides (Highest Precedence)
-    │
-    ▼
-Effective Appearance
+State visual parameters
+        ↓
+Theme visual parameters
+        ↓
+Surgical instance overrides
 ```
 
-The runtime exposes `registerFrnlTheme()` and component-level `applyTheme()`. Application-wide theme changes are intentionally not a separate runtime concept: an application can iterate over its rendered components and call the same component-level operation. Skipo is responsible for discovering application theme folders and registering the resulting theme data; FrnlTS only resolves and applies the semantic theme values.
+Applying a theme and changing state clear surgical overrides while preserving the selected theme.
 
-## Package Exports
+## Runtime validation
 
-The package is strictly ESM. Frnl state/event machinery is shared through the runtime, while concrete Frnl UI components are ordinary React components using the Frnl React hook:
+External semantic inputs and runtime mutations cross Zod validation boundaries before entering the Zustand runtime.
 
-- `.` (`@dinilmusick/frnlts`): Complete semantic framework and runtime exports.
-- `./runtime` (`@dinilmusick/frnlts/runtime`): Headless frontend runtime entry point (`createLifecycle`, `createScope`, `defineResource`, `FrnlRegistry`, `DependencyGraph`, `matchRoute`, `buildRouteUrl`, `FrnlRouter`, `validateAccessibility`).
-- `./react` (`@dinilmusick/frnlts/react`): `useFrnlComponent` and `FrnlSlot` for direct Frnl React components.
+## Package exports
+
+- `@dinilmusick/frnlts` — semantic runtime and component contracts.
+- `@dinilmusick/frnlts/runtime` — headless runtime.
+- `@dinilmusick/frnlts/react` — `useFrnlComponent` and `FrnlSlot`.
+
+Concrete UI remains ordinary React code.
