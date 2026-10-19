@@ -3,10 +3,11 @@ import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
 import type { FrnlElementDefinition } from '../elements/definition.js';
 import type { FrnlState } from '../runtime/store.js';
-import { getFrnlEvent } from '../runtime/events.js';
+import { getFrnlComponentHandle, getFrnlEvent } from '../runtime/events.js';
 
 export interface UseFrnlComponentOptions {
   id: string;
+  parentId?: string;
   definition: FrnlElementDefinition;
   store: StoreApi<FrnlState>;
   state?: string;
@@ -17,6 +18,7 @@ export interface UseFrnlComponentOptions {
 
 export function useFrnlComponent({
   id,
+  parentId,
   definition,
   store,
   state,
@@ -37,7 +39,8 @@ export function useFrnlComponent({
       bounds,
     });
     store.getState().registerElementDefinition(id, definition);
-  }, [id, definition, store]);
+    store.getState().registerComponentParent(id, parentId);
+  }, [id, parentId, definition, store]);
 
   useEffect(() => {
     const current = store.getState().entities[id];
@@ -60,9 +63,12 @@ export function useFrnlComponent({
   }, [id, state, properties, bounds, initialState, store]);
 
   useEffect(() => {
-    store.getState().registerEventHandlers(id, handlers);
+    store.getState().registerEventHandlers(id, {
+      ...handlers,
+      ...Object.fromEntries(Object.keys(handlersRef.current).map((key) => [key, handlersRef.current[key]])),
+    });
     return () => store.getState().unregisterEventHandlers(id);
-  }, [id, handlers, store]);
+  }, [id, store]);
 
   const entity = useStoreState(store, id);
   const events = useMemo(() => {
