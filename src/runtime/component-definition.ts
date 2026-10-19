@@ -17,9 +17,9 @@ export const frnlStateDefinitionSchema = z.object({
   events: z.record(z.string().min(1), frnlEventDefinitionSchema),
   visualParameters: z.record(z.string(), z.unknown()).default({}),
   phases: z.object({
-    attackPhase: frnlPhaseDefinitionSchema,
+    attackPhase: frnlPhaseDefinitionSchema.optional(),
     sustainPhase: frnlPhaseDefinitionSchema,
-    releasePhase: frnlPhaseDefinitionSchema,
+    releasePhase: frnlPhaseDefinitionSchema.optional(),
   }),
 });
 
