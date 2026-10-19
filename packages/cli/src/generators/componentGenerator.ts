@@ -51,12 +51,11 @@ export function ${name}({ id, store, children }: ${name}Props) {
 `);
 
   const stateImports = states.map((state) => `import { ${state}State } from './States/${state}/state.js';`).join('\n');
-  write(path.join(componentDir, 'definition.ts'), `import { defineFrnlElement } from '@dinilmusick/frnlts';
+  write(path.join(componentDir, 'definition.ts'), `import { defineFrnlComponent } from '@dinilmusick/frnlts';
 ${stateImports}
 
-export const definition = defineFrnlElement({
+export const definition = defineFrnlComponent({
   name: '${name}',
-  kind: 'primitive',
   states: {
 ${states.map((s) => `    ${s}: ${s}State,`).join('\n')}
   },
