@@ -5,7 +5,7 @@ import { getFrnlEvent, getFrnlVisualParameters, registerFrnlLibrary, setFrnlVisu
 
 const definition = defineFrnlComponent({
   name: 'Button',
-  states: {
+    states: {
     Idle: {
       name: 'Idle',
       visualParameters: { opacity: 1, scale: 1 },
@@ -32,7 +32,7 @@ const definition = defineFrnlComponent({
 describe('Frnl state-owned visuals and libraries', () => {
   it('clears surgical visual overrides whenever state changes', () => {
     const store = createFrnlStore();
-    store.getState().registerEntity('button', { , state: 'Idle', properties: {} });
+    store.getState().registerEntity('button', { state: 'Idle', properties: {} });
     store.getState().registerComponentDefinition('button', definition);
     setFrnlVisualParameter(store, 'button.opacity', 0.25);
     expect(getFrnlVisualParameters(store, 'button')).toMatchObject({ opacity: 0.25, scale: 1 });
@@ -48,7 +48,7 @@ describe('Frnl state-owned visuals and libraries', () => {
 
   it('gives event functions controlled access to state transitions', () => {
     const store = createFrnlStore();
-    store.getState().registerEntity('button', { , state: 'Idle', properties: {} });
+    store.getState().registerEntity('button', { state: 'Idle', properties: {} });
     store.getState().registerComponentDefinition('button', definition);
     store.getState().registerEventHandlers('button', {
       'Button.Idle.click': (_payload, context) => context.setState('Loading'),
@@ -63,7 +63,7 @@ describe('Frnl state-owned visuals and libraries', () => {
     registerFrnlLibrary(store, 'Button.functions', {
       computeOpacity: () => 0.42,
     });
-    store.getState().registerEntity('button', { , state: 'Idle', properties: {} });
+    store.getState().registerEntity('button', { state: 'Idle', properties: {} });
     store.getState().registerComponentDefinition('button', definition);
     store.getState().registerEventHandlers('button', {
       'Button.Idle.click': (_payload, context) => {
