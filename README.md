@@ -2,7 +2,7 @@
 
 > **A semantic frontend framework for defining and running Frnl Elements.**
 
-FrnlTS defines frontend/UI semantics, element structure, state behavior, visual definitions, and runtime boundaries. It is an independent frontend architecture within the Krusbl ecosystem.
+FrnlTS defines frontend/UI semantics, element structure, state behavior, visual definitions, and runtime boundaries. A Frnl component is the React component itself; FrnlTS does not wrap React components in semantic classes or adapter components. It is an independent frontend architecture within the Krusbl ecosystem.
 
 ---
 
@@ -103,7 +103,7 @@ Zustand runtime (Primitive / Composite / Slot / Event / Flow)
 pnpm add @dinilmusick/frnlts zustand zod
 ```
 
-### 1. Semantic Runtime (Renderer-Agnostic)
+### 1. Direct Frnl React Components
 
 ```typescript
 import { createFrnlStore } from '@dinilmusick/frnlts';
@@ -137,7 +137,7 @@ store.getState().setEntityState('submit-button', 'loading');
 // Emits entity.stateChanged AND slot.stateChanged on login-form.submit!
 ```
 
-### 2. React Assets (`@dinilmusick/frnlts/react`)
+### 2. Addressable Frnl Events
 
 ```tsx
 import React from 'react';
@@ -187,8 +187,8 @@ export function Shell({ content }: { content: React.ReactNode }) {
 
 ## Package Exports
 
-The package is strictly ESM and separates the renderer-agnostic core from the React asset adapter:
+The package is strictly ESM. Frnl state/event machinery is shared through the runtime, while concrete Frnl UI components are ordinary React components using the Frnl React hook:
 
 - `.` (`@dinilmusick/frnlts`): Complete semantic framework and runtime exports.
 - `./runtime` (`@dinilmusick/frnlts/runtime`): Headless frontend runtime entry point (`createLifecycle`, `createScope`, `defineResource`, `FrnlRegistry`, `DependencyGraph`, `matchRoute`, `buildRouteUrl`, `FrnlRouter`, `validateAccessibility`).
-- `./react` (`@dinilmusick/frnlts/react`): React adapter components (`FrnlPrimitive`, `FrnlComposite`, `FrnlSlot`) and React prop validators.
+- `./react` (`@dinilmusick/frnlts/react`): `useFrnlComponent` and `FrnlSlot` for direct Frnl React components.
