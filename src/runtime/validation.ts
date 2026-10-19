@@ -6,7 +6,7 @@ export const propertyKeySchema = z.string().min(1);
 
 /**
  * Property values are intentionally extensible to support arbitrary CSS, design tokens,
- * numeric scales, callbacks, or primitive payloads while the enclosing semantic structure
+ * numeric scales, callbacks, or application payloads while the enclosing semantic structure
  * (entity ID, property key, and state model) is strictly validated.
  */
 export const propertyValueSchema = z.unknown();
