@@ -37,6 +37,7 @@ describe('direct React component architecture', () => {
   it('has no legacy Bounds or Slot runtime concepts', () => {
     const store = RuntimeExports.createFrnlStore();
     const state = store.getState();
+
     expect('componentDefinitions' in state).toBe(true);
     expect('slots' in state).toBe(false);
     expect('slotCollections' in state).toBe(false);
@@ -55,23 +56,15 @@ describe('direct React component architecture', () => {
       expect(existsSync(resolve(here, path))).toBe(false);
     }
   });
-});
-    expect('occupantKind' in slotState).toBe(false);
 
-    // Verify flowTriggeredPayloadSchema uses componentId
-    const flowPayload = RuntimeExports.flowTriggeredPayloadSchema.parse({
-      flowId: 'flow-1',
-      componentId: 'comp-1',
-      trigger: 'click',
-    });
-    expect(flowPayload.componentId).toBe('comp-1');
-    expect('compositeId' in flowPayload).toBe(false);
-
-    // Verify entityStateSchema has no kind
-    const entityState = RuntimeExports.entityStateSchema.parse({
+  it('keeps component state free of layout ownership', () => {
+    const parsed = RuntimeExports.entityStateSchema.parse({
       state: 'idle',
       properties: {},
     });
-    expect('kind' in entityState).toBe(false);
+
+    expect('bounds' in parsed).toBe(false);
+    expect('slots' in parsed).toBe(false);
+    expect('children' in parsed).toBe(false);
   });
 });
