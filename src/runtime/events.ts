@@ -45,7 +45,7 @@ export function invokeFrnlEvent<TPayload = unknown, TResult = unknown>(
     );
   }
 
-  return handler(payload);
+  return handler(payload) as TResult | Promise<TResult>;
 }
 
 export function getFrnlEvent<TPayload = unknown, TResult = unknown>(
