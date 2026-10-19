@@ -146,6 +146,26 @@ React event / keyboard / application code
 
 `FrnlSlot` is itself a React component backed by the Frnl store. It provides stable addressable positions and live occupant replacement without wrapping the occupant component.
 
+### 4. Component Themes
+
+Themes are visual data applied to Frnl component instances. A theme is identified by name and contains optional component/state visual parameter overrides; omitted values fall back to the component state's own visual parameters.
+
+```text
+Theme name
+    ↓
+Component.applyTheme("Dark")
+    ↓
+current component state
+    ↓
+themed visual parameters
+    ↓
+state visual fallbacks
+    ↓
+surgical instance overrides
+```
+
+The runtime exposes `registerFrnlTheme()` and component-level `applyTheme()`. Application-wide theme changes are intentionally not a separate runtime concept: an application can iterate over its rendered components and call the same component-level operation. Skipo is responsible for discovering application theme folders and registering the resulting theme data; FrnlTS only resolves and applies the semantic theme values.
+
 ## Package Exports
 
 The package is strictly ESM. Frnl state/event machinery is shared through the runtime, while concrete Frnl UI components are ordinary React components using the Frnl React hook:
