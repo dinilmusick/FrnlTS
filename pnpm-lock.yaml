@@ -48,10 +48,10 @@ importers:
 
   packages/cli:
     dependencies:
-      '@dinilmusick/frnlts':
+      '@ultrst-armada/frnlts':
         specifier: workspace:*
         version: link:../..
-      '@dinilmusick/frnlts-validate':
+      '@ultrst-armada/frnlts-validate':
         specifier: workspace:*
         version: link:../validate
     devDependencies:
