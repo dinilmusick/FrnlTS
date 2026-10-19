@@ -21,9 +21,6 @@ Named visual data applied to component instances. Theme values override state vi
 ## Function
 Application or library logic invoked by an Event or Flow. FrnlTS defines invocation semantics, not business logic.
 
-## Visual Asset
-Renderer-facing visual data associated with a component or state. FrnlTS defines semantic visual parameters; ordinary React rendering remains responsible for producing pixels.
-
 ## Curve
 A normalized one-second value domain used by modulatable properties.
 
