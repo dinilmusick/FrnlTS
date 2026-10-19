@@ -81,6 +81,7 @@ export function useFrnlComponent({
 
 
   const entity = useStoreState(store, id);
+  const visualOverrides = useStore(store, (current: FrnlState) => current.visualOverrides[id]);
   const events = useMemo(() => {
     const names = new Set<string>();
     for (const stateDefinition of Object.values(definition.states)) {
@@ -95,7 +96,10 @@ export function useFrnlComponent({
   return {
     state: entity?.state ?? initialState,
     properties: entity?.properties ?? resolvedProperties,
-    visualParameters: getFrnlVisualParameters(store, id),
+    visualParameters: {
+      ...getFrnlVisualParameters(store, id),
+      ...(visualOverrides ?? {}),
+    },
     events,
   };
 }
