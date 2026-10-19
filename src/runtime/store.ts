@@ -45,6 +45,7 @@ export interface FrnlState {
   events: FrnlEvent[];
   elementDefinitions: Record<string, FrnlElementDefinition>;
   eventHandlers: Record<string, Record<string, (payload: unknown) => unknown>>;
+  componentParents: Record<string, string | undefined>;
   setEntityState: (entityId: string, state: string) => void;
   setEntityProperty: (entityId: string, key: string, value: unknown) => void;
   setEntityProperties: (entityId: string, properties: Record<string, unknown>) => void;
@@ -63,6 +64,7 @@ export interface FrnlState {
   registerElementDefinition: (componentId: string, definition: FrnlElementDefinition) => void;
   registerEventHandlers: (componentId: string, handlers: Record<string, (payload: unknown) => unknown>) => void;
   unregisterEventHandlers: (componentId: string) => void;
+  registerComponentParent: (componentId: string, parentId?: string) => void;
 }
 
 export function createFrnlStore(
@@ -79,6 +81,7 @@ export function createFrnlStore(
     events: [],
     elementDefinitions: {},
     eventHandlers: {},
+    componentParents: {},
 
     registerElementDefinition: (componentId, definition) => {
       const id = entityIdSchema.parse(componentId);
@@ -97,6 +100,15 @@ export function createFrnlStore(
         delete next[id];
         return { eventHandlers: next };
       });
+    },
+
+    registerComponentParent: (componentId, parentId) => {
+      const id = entityIdSchema.parse(componentId);
+      const parent = parentId === undefined ? undefined : entityIdSchema.parse(parentId);
+      if (parent === id) throw new Error(`Frnl component cannot be its own parent: ${id}`);
+      set((current) => ({
+        componentParents: { ...current.componentParents, [id]: parent },
+      }));
     },
 
     emit: (event) => {
