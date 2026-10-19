@@ -26,6 +26,8 @@ export function useFrnlComponent({
 }: UseFrnlComponentOptions) {
   const initialState = state ?? Object.keys(definition.states)[0] ?? 'default';
   const previousProps = useRef({ state: initialState, properties, bounds });
+  const handlersRef = useRef(handlers);
+  handlersRef.current = handlers;
 
   useEffect(() => {
     store.getState().registerEntity(id, {
