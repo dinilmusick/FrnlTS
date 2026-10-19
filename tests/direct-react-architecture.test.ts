@@ -34,20 +34,28 @@ describe('direct React component architecture', () => {
     expect('FrnlComposite' in RuntimeExports).toBe(false);
   });
 
-  it('enforces component-only slot occupants and flow payloads without legacy kind/compositeId', () => {
+  it('has no legacy Bounds or Slot runtime concepts', () => {
     const store = RuntimeExports.createFrnlStore();
-    expect('componentDefinitions' in store.getState()).toBe(true);
-    expect('elementDefinitions' in store.getState()).toBe(false);
-    expect('registerComponentDefinition' in store.getState()).toBe(true);
-    expect('registerElementDefinition' in store.getState()).toBe(false);
+    const state = store.getState();
+    expect('componentDefinitions' in state).toBe(true);
+    expect('slots' in state).toBe(false);
+    expect('slotCollections' in state).toBe(false);
+    expect('setEntityBounds' in state).toBe(false);
+    expect('registerSlot' in state).toBe(false);
+    expect('replaceSlotOccupant' in state).toBe(false);
+    expect('bounds' in RuntimeExports).toBe(false);
+    expect('slotStateSchema' in RuntimeExports).toBe(false);
+    expect('slotCollectionSchema' in RuntimeExports).toBe(false);
 
-    // Verify slotStateSchema has no occupantKind
-    const slotState = RuntimeExports.slotStateSchema.parse({
-      id: 'slot-1',
-      address: 'container.slot',
-      occupantId: 'child-1',
-      properties: {},
-    });
+    for (const path of [
+      '../src/react/FrnlSlot.tsx',
+      '../docs/concepts/bounds.md',
+      '../docs/concepts/slots.md',
+    ]) {
+      expect(existsSync(resolve(here, path))).toBe(false);
+    }
+  });
+});
     expect('occupantKind' in slotState).toBe(false);
 
     // Verify flowTriggeredPayloadSchema uses componentId
