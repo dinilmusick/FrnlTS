@@ -13,6 +13,7 @@
     "frnl": "./dist/bin/frnl.js"
   },
   "scripts": {
+    "frnl": "node ./dist/bin/frnl.js",
     "build": "tsup src/index.ts src/bin/frnl.ts --format esm --dts --clean",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

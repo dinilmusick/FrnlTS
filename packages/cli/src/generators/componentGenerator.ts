@@ -24,7 +24,7 @@ export function generateComponent(name: string, projectRoot: string, options: Co
 
   write(path.join(componentDir, `${name}.tsx`), `import type { ReactNode } from 'react';
 import type { StoreApi } from 'zustand/vanilla';
-import { useFrnlComponent } from '@dinilmusick/frnlts/react';
+import { useFrnlComponent } from '@ultrst-armada/frnlts/react';
 import { definition } from './definition.js';
 import { eventHandlers } from './events.js';
 
@@ -51,7 +51,7 @@ export function ${name}({ id, store, children }: ${name}Props) {
 `);
 
   const stateImports = states.map((state) => `import { ${state}State } from './States/${state}/state.js';`).join('\n');
-  write(path.join(componentDir, 'definition.ts'), `import { defineFrnlComponent } from '@dinilmusick/frnlts';
+  write(path.join(componentDir, 'definition.ts'), `import { defineFrnlComponent } from '@ultrst-armada/frnlts';
 ${stateImports}
 
 export const definition = defineFrnlComponent({
@@ -69,7 +69,7 @@ ${states.flatMap((state) => events.map((event) => `  '${name}.${state}.${event}'
 
   for (const state of states) {
     const eventDefs = events.map((event) => `    ${event}: { functionId: '${name}.${state}.${event}' },`).join('\n');
-    write(path.join(componentDir, 'States', state, 'state.ts'), `import type { FrnlStateDefinition } from '@dinilmusick/frnlts';
+    write(path.join(componentDir, 'States', state, 'state.ts'), `import type { FrnlStateDefinition } from '@ultrst-armada/frnlts';
 
 export const ${state}State: FrnlStateDefinition = {
   name: '${state}',
@@ -87,7 +87,7 @@ ${eventDefs}
 `);
     write(path.join(componentDir, 'States', state, 'Events', '.gitkeep'), '');
     for (const event of events) {
-      write(path.join(componentDir, 'States', state, 'Events', `${event}.ts`), `export function ${state}${event}(payload: unknown, context: import('@dinilmusick/frnlts').FrnlEventContext): unknown {
+      write(path.join(componentDir, 'States', state, 'Events', `${event}.ts`), `export function ${state}${event}(payload: unknown, context: import('@ultrst-armada/frnlts').FrnlEventContext): unknown {
   // Keep this state-specific event function intentionally small.
   // Delegate implementation to component Libraries.
   void payload;\n  void context;
@@ -116,7 +116,7 @@ export function generateState(componentName: string, state: string, projectRoot:
   if (!fs.existsSync(componentDir)) throw new Error('Unknown Frnl component: ' + componentName);
   const stateDir = path.join(componentDir, 'States', state);
   fs.mkdirSync(path.join(stateDir, 'Events'), { recursive: true });
-  write(path.join(stateDir, 'state.ts'), `import type { FrnlStateDefinition } from '@dinilmusick/frnlts';
+  write(path.join(stateDir, 'state.ts'), `import type { FrnlStateDefinition } from '@ultrst-armada/frnlts';
 
 export const ${state}State: FrnlStateDefinition = {
   name: '${state}',
@@ -150,7 +150,7 @@ export function generateEvent(componentName: string, state: string, event: strin
   const stateFile = path.join(componentDir, 'States', state, 'state.ts');
   if (!fs.existsSync(stateFile)) generateState(componentName, state, projectRoot);
   fs.mkdirSync(path.dirname(eventFile), { recursive: true });
-  write(eventFile, `export function ${state}${event}(payload: unknown, context: import('@dinilmusick/frnlts').FrnlEventContext): unknown {
+  write(eventFile, `export function ${state}${event}(payload: unknown, context: import('@ultrst-armada/frnlts').FrnlEventContext): unknown {
   void payload;
   void context;
 }

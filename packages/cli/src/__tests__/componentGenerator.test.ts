@@ -54,7 +54,7 @@ describe('Frnl component generator', () => {
   });
 
   it('generates scaffolds that pass Frnl workspace validation', async () => {
-    const { validateFrnlWorkspace } = await import('@dinilmusick/frnlts-validate');
+    const { validateFrnlWorkspace } = await import('@ultrst-armada/frnlts-validate');
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'frnl-scaffold-val-'));
     generateComponent('Dialog', root, { states: ['Idle', 'Open'], events: ['Click', 'Close'] });
 

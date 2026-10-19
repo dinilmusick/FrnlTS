@@ -1,4 +1,4 @@
-import { formatValidation, validateFrnlWorkspace } from '@dinilmusick/frnlts-validate';
+import { formatValidation, validateFrnlWorkspace } from '@ultrst-armada/frnlts-validate';
 
 export function runValidate(root: string = process.cwd()): number {
   const result = validateFrnlWorkspace(root);

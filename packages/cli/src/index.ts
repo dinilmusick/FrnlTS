@@ -9,7 +9,8 @@ import { runWatch } from './commands/watch.js';
 
 export { generateComponent, generateState, generateEvent, generateLibrary, generateOrchestration, generatePage, runBuild, runDev, inspectComponent, runValidate, runWatch };
 
-export async function runFrnlCli(argv: string[] = process.argv.slice(2)): Promise<number> {
+export async function runFrnlCli(rawArgv: string[] = process.argv.slice(2)): Promise<number> {
+  const argv = rawArgv[0] === '--' ? rawArgv.slice(1) : rawArgv;
   const [command, type, name, ...rest] = argv;
   const root = process.cwd();
 
