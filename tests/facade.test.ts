@@ -37,6 +37,26 @@ describe('Frnl facade', () => {
     expect(facade.library<{ run: () => string }>('Button.functions').run()).toBe('ok');
   });
 
+  it('applies a theme through the component handle and aggregates the same operation across components', () => {
+    const store = createFrnlStore();
+    store.getState().registerEntity('btn-1', { kind: 'primitive', state: 'Idle', properties: {} });
+    store.getState().registerEntity('btn-2', { kind: 'primitive', state: 'Idle', properties: {} });
+    store.getState().registerElementDefinition('btn-1', testDefinition);
+    store.getState().registerElementDefinition('btn-2', testDefinition);
+
+    const facade = createFrnlFacade(store);
+    facade.registerTheme('Dark', {
+      Button: { states: { Idle: { visualParameters: { opacity: 0.4 } } } },
+    });
+
+    facade.component('btn-1').applyTheme('Dark');
+    expect(getFrnlVisualParameters(store, 'btn-1').opacity).toBe(0.4);
+
+    facade.applyThemeToAllComponents('Dark');
+    expect(getFrnlVisualParameters(store, 'btn-1').opacity).toBe(0.4);
+    expect(getFrnlVisualParameters(store, 'btn-2').opacity).toBe(0.4);
+  });
+
   it('provides component handles, event triggers, and scoped visual parameter mutation', () => {
     const store = createFrnlStore();
     store.getState().registerEntity('btn-1', { kind: 'primitive', state: 'Idle', properties: {} });
