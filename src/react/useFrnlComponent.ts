@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
+import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
 import type { FrnlElementDefinition } from '../elements/definition.js';
 import type { FrnlState } from '../runtime/store.js';
@@ -82,13 +83,5 @@ export function useFrnlComponent({
 
 function useStoreState(store: StoreApi<FrnlState>, id: string) {
   // React's useSyncExternalStore is used through Zustand's vanilla-compatible hook.
-  const { useStore } = requireZustand();
   return useStore(store, (current: FrnlState) => current.entities[id]);
 }
-
-function requireZustand(): typeof import('zustand') {
-  // Kept as a tiny indirection so the Frnl hook only depends on Zustand's public hook.
-  return zustandModule;
-}
-
-import * as zustandModule from 'zustand';
