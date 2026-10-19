@@ -644,6 +644,8 @@ describe('FrnlTS Frontend Runtime Suite', () => {
 
       expect(store.getState().entities['btn-primary'].properties.label).toBe('Submit');
       expect('bounds' in store.getState().entities['btn-primary']).toBe(false);
+      expect('slots' in store.getState()).toBe(false);
+      expect('slotCollections' in store.getState()).toBe(false);
 
       store.getState().setEntityProperty('btn-primary', 'label', 'Saving...');
       expect(store.getState().entities['btn-primary'].properties.label).toBe('Saving...');
@@ -651,26 +653,6 @@ describe('FrnlTS Frontend Runtime Suite', () => {
       store.getState().setEntityState('btn-primary', 'hovered');
       expect(store.getState().entities['btn-primary'].state).toBe('hovered');
       expect(store.getState().events.some((e) => e.type === 'entity.stateChanged')).toBe(true);
-    });
-
-      store.getState().replaceSlotOccupant('main-slot', {
-        id: 'card-view',
-      });
-
-      expect(store.getState().slots['main-slot'].occupantId).toBe('card-view');
-
-      // Collections
-      store.getState().registerSlotCollection('toolbar-slots', {
-        address: 'page.header.toolbar',
-        slotIds: [],
-      });
-
-      store.getState().addSlotToCollection('toolbar-slots', 'slot-1');
-      store.getState().addSlotToCollection('toolbar-slots', 'slot-2');
-      expect(store.getState().slotCollections['toolbar-slots'].slotIds).toEqual(['slot-1', 'slot-2']);
-
-      store.getState().removeSlotFromCollection('toolbar-slots', 'slot-1');
-      expect(store.getState().slotCollections['toolbar-slots'].slotIds).toEqual(['slot-2']);
     });
   });
 
