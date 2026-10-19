@@ -17,6 +17,9 @@ export const frnlEventDefinitionSchema = z.object({
 export const frnlStateDefinitionSchema = z.object({
   name: z.string().min(1),
   events: z.record(z.string().min(1), frnlEventDefinitionSchema),
+  // Visual parameters belong to the state. Phases describe animation of those
+  // state-owned parameters; they do not own independent component appearance.
+  visualParameters: z.record(z.string(), z.unknown()).default({}),
   phases: z.object({
     attackPhase: frnlPhaseDefinitionSchema,
     sustainPhase: frnlPhaseDefinitionSchema,
@@ -37,13 +40,6 @@ export type FrnlEventDefinition = z.infer<typeof frnlEventDefinitionSchema>;
 export type FrnlStateDefinition = z.infer<typeof frnlStateDefinitionSchema>;
 export type FrnlElementDefinition = z.infer<typeof frnlElementDefinitionSchema>;
 
-/**
- * Defines the semantic facade for an Element.
- *
- * Primitive and Composite are independent element kinds. The definition does
- * not encode either kind as a child of the other; composition is represented
- * by runtime relationships rather than filesystem or type coupling.
- */
 export function defineFrnlElement<T extends FrnlElementDefinition>(definition: T): T {
   return frnlElementDefinitionSchema.parse(definition) as T;
 }
