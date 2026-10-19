@@ -634,38 +634,24 @@ describe('FrnlTS Frontend Runtime Suite', () => {
   });
 
   describe('7. Semantic Store & Reactive State Invariants', () => {
-    it('registers entities, slots, and manages state propagation', () => {
+    it('registers entities and manages state propagation without layout metadata', () => {
       const store = createFrnlStore();
 
       store.getState().registerEntity('btn-primary', {
-                state: 'idle',
+        state: 'idle',
         properties: { label: 'Submit' },
       });
 
       expect(store.getState().entities['btn-primary'].properties.label).toBe('Submit');
+      expect('bounds' in store.getState().entities['btn-primary']).toBe(false);
 
-      // Update property
       store.getState().setEntityProperty('btn-primary', 'label', 'Saving...');
       expect(store.getState().entities['btn-primary'].properties.label).toBe('Saving...');
 
-      // Transition entity state
       store.getState().setEntityState('btn-primary', 'hovered');
       expect(store.getState().entities['btn-primary'].state).toBe('hovered');
-
-      // Verify event was logged
-      const events = store.getState().events;
-      expect(events.some((e) => e.type === 'entity.stateChanged')).toBe(true);
+      expect(store.getState().events.some((e) => e.type === 'entity.stateChanged')).toBe(true);
     });
-
-    it('manages repeatable slot collections and slot occupant replacement', () => {
-      const store = createFrnlStore();
-
-      store.getState().registerSlot('main-slot', {
-        id: 'main-slot',
-        address: 'page.body.slot',
-        occupantId: null,
-        properties: {},
-      });
 
       store.getState().replaceSlotOccupant('main-slot', {
         id: 'card-view',
@@ -719,7 +705,7 @@ describe('FrnlTS Frontend Runtime Suite', () => {
 
     it('keeps React adapter separate with zero React pollution in core runtime', () => {
       expect(ReactExports.useFrnlComponent).toBeDefined();
-      expect(ReactExports.FrnlSlot).toBeDefined();
+      expect('FrnlSlot' in ReactExports).toBe(false);
 
       expect(RuntimeExports.defineFrnlComponent).toBeDefined();
       expect(RootExports.defineFrnlComponent).toBeDefined();
