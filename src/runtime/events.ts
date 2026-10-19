@@ -1,5 +1,5 @@
 import type { StoreApi } from 'zustand/vanilla';
-import type { FrnlElementDefinition } from '../elements/definition.js';
+import type { FrnlComponentDefinition } from './component-definition.js';
 import type { FrnlState } from './store.js';
 import { getFrnlLibrary } from './libraries.js';
 import { applyFrnlTheme, resolveFrnlVisualParameters } from './themes.js';
@@ -25,10 +25,10 @@ export type FrnlComponentPath = readonly string[];
 export type FrnlComponentAddress = { readonly path: FrnlComponentPath; readonly componentId: string };
 export type FrnlEventInvocation = { componentId: string; path: FrnlComponentPath; eventName: string; state: string; functionId: string };
 
-type EventName<TDefinition extends FrnlElementDefinition> =
+type EventName<TDefinition extends FrnlComponentDefinition> =
   keyof TDefinition['states'][keyof TDefinition['states']]['events'] & string;
 
-export type FrnlComponentHandle<TDefinition extends FrnlElementDefinition = FrnlElementDefinition> = {
+export type FrnlComponentHandle<TDefinition extends FrnlComponentDefinition = FrnlComponentDefinition> = {
   readonly address: FrnlComponentAddress;
   event<TEventName extends EventName<TDefinition>>(eventName: TEventName): FrnlEventTrigger;
   setState(state: string): void;
@@ -74,7 +74,7 @@ export function setFrnlVisualParameter(store: StoreApi<FrnlState>, address: stri
 export function getFrnlVisualParameters(store: StoreApi<FrnlState>, componentId: string): Record<string, unknown> {
   const current = store.getState();
   const entity = current.entities[componentId];
-  const definition = current.elementDefinitions[componentId];
+  const definition = current.componentDefinitions[componentId];
   if (!entity || !definition) return {};
   const state = definition.states[entity.state];
   if (!state) return {};
@@ -104,7 +104,7 @@ export function getFrnlEvent<TPayload = unknown, TResult = unknown>(
   return (payload?: TPayload) => invokeFrnlEvent<TPayload, TResult>(store, componentId, eventName, payload as TPayload);
 }
 
-export function getFrnlComponentHandle<TDefinition extends FrnlElementDefinition>(
+export function getFrnlComponentHandle<TDefinition extends FrnlComponentDefinition>(
   store: StoreApi<FrnlState>, componentId: string,
 ): FrnlComponentHandle<TDefinition> {
   return {
@@ -126,7 +126,7 @@ export function getFrnlEventAtPath(store: StoreApi<FrnlState>, path: FrnlCompone
   return getFrnlEvent(store, componentId, eventName);
 }
 
-export function registerFrnlElement(store: StoreApi<FrnlState>, componentId: string, definition: FrnlElementDefinition, parentId?: string): void {
+export function registerFrnlComponent(store: StoreApi<FrnlState>, componentId: string, definition: FrnlComponentDefinition, parentId?: string): void {
   store.getState().registerElementDefinition(componentId, definition);
   store.getState().registerComponentParent(componentId, parentId);
 }
