@@ -36,7 +36,6 @@ export function useFrnlComponent({
 
   useEffect(() => {
     store.getState().registerEntity(id, {
-      kind: definition.kind,
       state: initialState,
       properties: resolvedProperties,
       bounds,
