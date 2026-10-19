@@ -135,10 +135,10 @@ export const ${state}State: FrnlStateDefinition = {
   const definition = fs.readFileSync(definitionFile, 'utf8');
   const withImport = definition.includes(`./States/${state}/state.js`)
     ? definition
-    : definition.replace(/(import .*\\n)+/, (imports) => imports + `import { ${state}State } from './States/${state}/state.js';\\n`);
+    : definition.replace(/(import .*\n)+/, (imports) => imports + `import { ${state}State } from './States/${state}/state.js';\n`);
   const withState = withImport.includes(`${state}: ${state}State`)
     ? withImport
-    : withImport.replace(/states: \\{/, `states: {\\n    ${state}: ${state}State,`);
+    : withImport.replace(/states: \{/, `states: {\n    ${state}: ${state}State,`);
   fs.writeFileSync(definitionFile, withState);
   return stateDir;
 }
@@ -157,7 +157,7 @@ export function generateEvent(componentName: string, state: string, event: strin
 `);
   let stateSource = fs.readFileSync(stateFile, 'utf8');
   if (!stateSource.includes(`${event}: { functionId:`)) {
-    stateSource = stateSource.replace(/events: \\{/, `events: {\\n    ${event}: { functionId: '${componentName}.${state}.${event}' },`);
+    stateSource = stateSource.replace(/events: \{/, `events: {\n    ${event}: { functionId: '${componentName}.${state}.${event}' },`);
     fs.writeFileSync(stateFile, stateSource);
   }
   const eventsFile = path.join(componentDir, 'events.ts');
@@ -166,7 +166,7 @@ export function generateEvent(componentName: string, state: string, event: strin
     eventsSource = `import { ${state}${event} } from './States/${state}/Events/${event}.js';\\n` + eventsSource;
   }
   if (!eventsSource.includes(`'${componentName}.${state}.${event}':`)) {
-    eventsSource += `\\nexport const __${state}${event} = '${componentName}.${state}.${event}';\\n`;
+    eventsSource += `\nexport const __${state}${event} = '${componentName}.${state}.${event}';\n`;
   }
   fs.writeFileSync(eventsFile, eventsSource);
   return eventFile;
