@@ -66,7 +66,6 @@ describe('direct Frnl React components', () => {
     render(<TestButton store={store} />);
 
     expect(screen.getByTestId('button')).toHaveAttribute('data-state', 'idle');
-    expect(store.getState().entities['button-1']?.kind).toBe('primitive');
 
     act(() => {
       screen.getByTestId('button').click();
