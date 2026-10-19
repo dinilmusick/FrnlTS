@@ -41,7 +41,7 @@ export function useFrnlComponent({
       properties: resolvedProperties,
       bounds,
     });
-    store.getState().registerElementDefinition(id, definition);
+    store.getState().registerComponentDefinition(id, definition);
     store.getState().registerComponentParent(id, parentId);
     return () => store.getState().unregisterEntity(id);
   }, [id, parentId, definition, store]);
