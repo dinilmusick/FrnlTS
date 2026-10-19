@@ -18,6 +18,7 @@ export function generateComponent(name: string, projectRoot: string, options: Co
   if (!/^[A-Z][A-Za-z0-9]*$/.test(name)) throw new Error('Component name must be PascalCase.');
   const states = [...new Set(options.states?.length ? options.states : [DEFAULT_STATE])];
   const events = [...new Set(options.events?.length ? options.events : [DEFAULT_EVENT])];
+  const clickProp = events.includes('Click') ? ' onClick={frnl.events.Click}' : '';
   const componentDir = path.join(projectRoot, 'components', name);
   if (fs.existsSync(componentDir)) throw new Error(`Component already exists: ${componentDir}`);
 
@@ -42,7 +43,7 @@ export function ${name}({ id, store, children }: ${name}Props) {
   });
 
   return (
-    <div data-frnl-component="${name}" data-frnl-state={frnl.state}>
+    <div data-frnl-component="${name}" data-frnl-state={frnl.state}${clickProp}>
       {children}
     </div>
   );
