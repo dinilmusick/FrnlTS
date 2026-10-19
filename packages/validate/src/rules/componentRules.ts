@@ -1,5 +1,5 @@
 import * as path from 'node:path';
-import ts from 'typescript';
+import * as ts from 'typescript';
 import type { FrnlValidationDiagnostic } from '../types.js';
 
 function hasJsx(node: ts.Node): boolean {
