@@ -59,7 +59,6 @@ function createEventContext(store: StoreApi<FrnlState>, componentId: string): Fr
     state: entity.state,
     setState: (state) => current.setEntityState(componentId, state),
     setVisualParameter: (parameter, value) => current.setVisualOverride(componentId, parameter, value),
-    applyTheme: (themeName) => applyFrnlTheme(store, componentId, themeName),
     getLibrary: <T = unknown>(address: string) => getFrnlLibrary<T>(store, address),
   };
 }
