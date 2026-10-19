@@ -28,6 +28,9 @@ export class FrnlFacade {
   }
 
   applyThemeToAllComponents(themeName: string): void {
+    if (!this.store.getState().themes[themeName]) {
+      throw new Error(`Unknown Frnl theme: ${themeName}`);
+    }
     for (const componentId of Object.keys(this.store.getState().entities)) {
       applyFrnlTheme(this.store, componentId, themeName);
     }

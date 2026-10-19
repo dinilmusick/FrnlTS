@@ -698,12 +698,26 @@ describe('FrnlTS Frontend Runtime Suite', () => {
       expect(RootExports.FrnlRegistry).toBeDefined();
       expect(RootExports.FrnlRouter).toBeDefined();
       expect(RootExports.createFrnlStore).toBeDefined();
+      expect(RootExports.registerFrnlTheme).toBeDefined();
+      expect(RootExports.applyFrnlTheme).toBeDefined();
+      expect(RootExports.resolveFrnlVisualParameters).toBeDefined();
+      expect(RootExports.getFrnlComponentTheme).toBeDefined();
+      expect(RootExports.FrnlFacade).toBeDefined();
+      expect(RootExports.createFrnlFacade).toBeDefined();
+      expect(RootExports.frnlThemeDefinitionSchema).toBeDefined();
 
       expect(RuntimeExports.createLifecycle).toBeDefined();
       expect(RuntimeExports.createScope).toBeDefined();
       expect(RuntimeExports.FrnlRegistry).toBeDefined();
       expect(RuntimeExports.FrnlRouter).toBeDefined();
       expect(RuntimeExports.createFrnlStore).toBeDefined();
+      expect(RuntimeExports.registerFrnlTheme).toBeDefined();
+      expect(RuntimeExports.applyFrnlTheme).toBeDefined();
+      expect(RuntimeExports.resolveFrnlVisualParameters).toBeDefined();
+      expect(RuntimeExports.getFrnlComponentTheme).toBeDefined();
+      expect(RuntimeExports.FrnlFacade).toBeDefined();
+      expect(RuntimeExports.createFrnlFacade).toBeDefined();
+      expect(RuntimeExports.frnlThemeDefinitionSchema).toBeDefined();
     });
 
     it('keeps React adapter separate with zero React pollution in core runtime', () => {

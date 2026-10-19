@@ -132,7 +132,7 @@ describe('direct Frnl React components', () => {
     expect(store.getState().componentThemes['button-1']).toBe('Light');
   });
 
-  it('cleans up runtime entity, definition, handlers, and visual overrides on unmount', () => {
+  it('cleans up runtime entity, definition, handlers, visual overrides, and theme selection on unmount', () => {
     const store = createFrnlStore();
     const { unmount } = render(<TestButton store={store} />);
 
@@ -140,7 +140,15 @@ describe('direct Frnl React components', () => {
     expect(store.getState().elementDefinitions['button-1']).toBeDefined();
     expect(store.getState().eventHandlers['button-1']).toBeDefined();
 
-    store.getState().setVisualOverride('button-1', 'opacity', 0.2);
+    act(() => {
+      store.getState().registerTheme('Dark', {
+        button: { states: { idle: { visualParameters: { opacity: 0.25 } } } },
+      });
+      latestFrnl?.applyTheme('Dark');
+      store.getState().setVisualOverride('button-1', 'opacity', 0.2);
+    });
+
+    expect(store.getState().componentThemes['button-1']).toBe('Dark');
     expect(store.getState().visualOverrides['button-1']?.opacity).toBe(0.2);
 
     act(() => {
@@ -153,5 +161,57 @@ describe('direct Frnl React components', () => {
     expect(store.getState().visualOverrides['button-1']).toBeUndefined();
     expect(store.getState().componentParents['button-1']).toBeUndefined();
     expect(store.getState().componentThemes['button-1']).toBeUndefined();
+  });
+
+  it('clears surgical overrides and rerenders when switching themes and states', () => {
+    const store = createFrnlStore();
+    render(<TestButton store={store} />);
+
+    act(() => {
+      store.getState().registerTheme('Dark', {
+        button: {
+          states: {
+            idle: { visualParameters: { opacity: 0.25 } },
+            loading: { visualParameters: { opacity: 0.1 } },
+          },
+        },
+      });
+      store.getState().registerTheme('Light', {
+        button: {
+          states: {
+            idle: { visualParameters: { opacity: 0.75 } },
+            loading: { visualParameters: { opacity: 0.5 } },
+          },
+        },
+      });
+      latestFrnl?.applyTheme('Dark');
+    });
+
+    expect(screen.getByTestId('button')).toHaveAttribute('data-opacity', '0.25');
+
+    // Surgical override takes precedence over theme
+    act(() => {
+      store.getState().setVisualOverride('button-1', 'opacity', 0.99);
+    });
+    expect(screen.getByTestId('button')).toHaveAttribute('data-opacity', '0.99');
+
+    // Switching theme clears surgical override and rerenders with new theme value
+    act(() => {
+      latestFrnl?.applyTheme('Light');
+    });
+    expect(screen.getByTestId('button')).toHaveAttribute('data-opacity', '0.75');
+
+    // Transitioning state preserves selected theme and clears any new surgical override
+    act(() => {
+      store.getState().setVisualOverride('button-1', 'opacity', 0.88);
+    });
+    expect(screen.getByTestId('button')).toHaveAttribute('data-opacity', '0.88');
+
+    act(() => {
+      screen.getByTestId('button').click();
+    });
+    expect(screen.getByTestId('button')).toHaveAttribute('data-state', 'loading');
+    expect(screen.getByTestId('button')).toHaveAttribute('data-opacity', '0.5');
+    expect(store.getState().componentThemes['button-1']).toBe('Light');
   });
 });

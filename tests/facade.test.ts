@@ -61,6 +61,66 @@ describe('Frnl facade', () => {
     expect(store.getState().componentThemes).toMatchObject({ 'btn-1': 'Dark', 'btn-2': 'Dark' });
   });
 
+  it('rejects batch theme application if the theme is unregistered', () => {
+    const store = createFrnlStore();
+    const facade = createFrnlFacade(store);
+    expect(() => facade.applyThemeToAllComponents('MissingTheme')).toThrow('Unknown Frnl theme: MissingTheme');
+  });
+
+  it('aggregates theme application across multiple different component types and clears overrides', () => {
+    const store = createFrnlStore();
+    const badgeDefinition = defineFrnlElement({
+      name: 'Badge',
+      kind: 'primitive',
+      states: {
+        Default: {
+          name: 'Default',
+          visualParameters: { background: 'white', size: 12 },
+          events: {},
+          phases: {
+            attackPhase: { visualDefinition: { parameters: {} } },
+            sustainPhase: { visualDefinition: { parameters: {} } },
+            releasePhase: { visualDefinition: { parameters: {} } },
+          },
+        },
+      },
+    });
+
+    store.getState().registerEntity('btn-1', { kind: 'primitive', state: 'Idle', properties: {} });
+    store.getState().registerEntity('badge-1', { kind: 'primitive', state: 'Default', properties: {} });
+    store.getState().registerEntity('card-1', { kind: 'primitive', state: 'Idle', properties: {} });
+
+    store.getState().registerElementDefinition('btn-1', testDefinition);
+    store.getState().registerElementDefinition('badge-1', badgeDefinition);
+    store.getState().registerElementDefinition('card-1', testDefinition);
+
+    const facade = createFrnlFacade(store);
+    facade.registerTheme('Contrast', {
+      Button: { states: { Idle: { visualParameters: { opacity: 0.3 } } } },
+      Badge: { states: { Default: { visualParameters: { background: 'black' } } } },
+    });
+
+    // Apply surgical override before batch
+    facade.component('btn-1').setVisualParameter('opacity', 0.05);
+    facade.component('badge-1').setVisualParameter('size', 20);
+    expect(getFrnlVisualParameters(store, 'btn-1').opacity).toBe(0.05);
+    expect(getFrnlVisualParameters(store, 'badge-1').size).toBe(20);
+
+    facade.applyThemeToAllComponents('Contrast');
+
+    // btn-1 has themed opacity, override cleared
+    expect(getFrnlVisualParameters(store, 'btn-1')).toEqual({ opacity: 0.3 });
+    // badge-1 has themed background, override on size cleared, size falls back to state default 12
+    expect(getFrnlVisualParameters(store, 'badge-1')).toEqual({ background: 'black', size: 12 });
+    // card-1 has testDefinition (Button) which gets themed opacity: 0.3
+    expect(getFrnlVisualParameters(store, 'card-1')).toEqual({ opacity: 0.3 });
+    expect(store.getState().componentThemes).toEqual({
+      'btn-1': 'Contrast',
+      'badge-1': 'Contrast',
+      'card-1': 'Contrast',
+    });
+  });
+
   it('provides component handles, event triggers, and scoped visual parameter mutation', () => {
     const store = createFrnlStore();
     store.getState().registerEntity('btn-1', { kind: 'primitive', state: 'Idle', properties: {} });

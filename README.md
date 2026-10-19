@@ -151,17 +151,16 @@ React event / keyboard / application code
 Themes are visual data applied to Frnl component instances. A theme is identified by name and contains optional component/state visual parameter overrides; omitted values fall back to the component state's own visual parameters.
 
 ```text
-Theme name
-    ↓
-Component.applyTheme("Dark")
-    ↓
-current component state
-    ↓
-themed visual parameters
-    ↓
-state visual fallbacks
-    ↓
-surgical instance overrides
+Component State Visual Parameters (Fallback)
+    │
+    ▼
+Optional Theme Visual Values
+    │
+    ▼
+Surgical Instance Visual Overrides (Highest Precedence)
+    │
+    ▼
+Effective Appearance
 ```
 
 The runtime exposes `registerFrnlTheme()` and component-level `applyTheme()`. Application-wide theme changes are intentionally not a separate runtime concept: an application can iterate over its rendered components and call the same component-level operation. Skipo is responsible for discovering application theme folders and registering the resulting theme data; FrnlTS only resolves and applies the semantic theme values.

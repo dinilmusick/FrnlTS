@@ -7,7 +7,7 @@ import {
   registerFrnlTheme,
   resolveFrnlVisualParameters,
 } from '../src/runtime/themes.js';
-import { getFrnlVisualParameters, setFrnlVisualParameter } from '../src/runtime/events.js';
+import { getFrnlComponentHandle, getFrnlVisualParameters, setFrnlVisualParameter } from '../src/runtime/events.js';
 
 const definition = defineFrnlElement({
   name: 'Button',
@@ -158,5 +158,94 @@ describe('Frnl component themes', () => {
     store.getState().registerElementDefinition('button', definition);
 
     expect(() => applyFrnlTheme(store, 'button', 'Missing')).toThrow('Unknown Frnl theme');
+  });
+
+  it('rejects applying a theme to an unknown component', () => {
+    const store = createFrnlStore();
+    registerFrnlTheme(store, 'Dark', {
+      Button: { states: { Idle: { visualParameters: { opacity: 0.4 } } } },
+    });
+
+    expect(() => applyFrnlTheme(store, 'non-existent', 'Dark')).toThrow(
+      'Unknown Frnl component: non-existent',
+    );
+  });
+
+  it('rejects empty theme names and invalid theme data structures', () => {
+    const store = createFrnlStore();
+    expect(() => registerFrnlTheme(store, '', {})).toThrow();
+    expect(() =>
+      registerFrnlTheme(store, 'BadTheme', {
+        Button: { invalidKey: 123 } as any,
+      }),
+    ).toThrow();
+  });
+
+  it('rejects element definitions registered after an incompatible theme', () => {
+    const store = createFrnlStore();
+    store.getState().registerEntity('button', { kind: 'primitive', state: 'Idle', properties: {} });
+
+    // Register theme referencing state "Ghost" before Button definition exists
+    registerFrnlTheme(store, 'PreRegisteredInvalid', {
+      Button: { states: { Ghost: { visualParameters: { opacity: 0.2 } } } },
+    });
+
+    // Attempting to register definition afterwards must validate and throw
+    expect(() =>
+      store.getState().registerElementDefinition('button', definition),
+    ).toThrow('references unknown state "Ghost"');
+    expect(store.getState().elementDefinitions.button).toBeUndefined();
+  });
+
+  it('supports valid themes registered before element definitions', () => {
+    const store = createFrnlStore();
+    store.getState().registerEntity('button', { kind: 'primitive', state: 'Idle', properties: {} });
+
+    registerFrnlTheme(store, 'EarlyValid', {
+      Button: { states: { Idle: { visualParameters: { opacity: 0.35 } } } },
+    });
+
+    store.getState().registerElementDefinition('button', definition);
+    applyFrnlTheme(store, 'button', 'EarlyValid');
+
+    expect(resolveFrnlVisualParameters(store, 'button')).toEqual({ opacity: 0.35, scale: 1 });
+  });
+
+  it('allows applying themes directly through getFrnlComponentHandle', () => {
+    const store = createFrnlStore();
+    store.getState().registerEntity('button', { kind: 'primitive', state: 'Idle', properties: {} });
+    store.getState().registerElementDefinition('button', definition);
+    registerFrnlTheme(store, 'Dark', {
+      Button: { states: { Idle: { visualParameters: { opacity: 0.45 } } } },
+    });
+
+    const handle = getFrnlComponentHandle(store, 'button');
+    handle.setVisualParameter('opacity', 0.99);
+    expect(resolveFrnlVisualParameters(store, 'button').opacity).toBe(0.99);
+
+    handle.applyTheme('Dark');
+    expect(resolveFrnlVisualParameters(store, 'button').opacity).toBe(0.45);
+    expect(getFrnlComponentTheme(store, 'button')).toBe('Dark');
+  });
+
+  it('falls back gracefully when theme omits individual parameters or visualParameters entirely', () => {
+    const store = createFrnlStore();
+    store.getState().registerEntity('button', { kind: 'primitive', state: 'Idle', properties: {} });
+    store.getState().registerElementDefinition('button', definition);
+
+    // Only overrides scale, opacity omitted
+    registerFrnlTheme(store, 'ScaleOnly', {
+      Button: { states: { Idle: { visualParameters: { scale: 1.4 } } } },
+    });
+    // States defined without visualParameters
+    registerFrnlTheme(store, 'EmptyState', {
+      Button: { states: { Idle: {} } },
+    });
+
+    applyFrnlTheme(store, 'button', 'ScaleOnly');
+    expect(resolveFrnlVisualParameters(store, 'button')).toEqual({ opacity: 1, scale: 1.4 });
+
+    applyFrnlTheme(store, 'button', 'EmptyState');
+    expect(resolveFrnlVisualParameters(store, 'button')).toEqual({ opacity: 1, scale: 1 });
   });
 });

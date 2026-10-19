@@ -71,7 +71,9 @@ jobs:
             import * as React from '@dinilmusick/frnlts/react';
 
             if (typeof Root.createLifecycle !== 'function') throw new Error('Missing Root.createLifecycle');
+            if (typeof Root.registerFrnlTheme !== 'function') throw new Error('Missing Root.registerFrnlTheme');
             if (typeof Runtime.createScope !== 'function') throw new Error('Missing Runtime.createScope');
+            if (typeof Runtime.applyFrnlTheme !== 'function') throw new Error('Missing Runtime.applyFrnlTheme');
             if (typeof React.FrnlSlot !== 'function') throw new Error('Missing React.FrnlSlot');
             console.log('CI Smoke test passed successfully!');
           "
