@@ -87,8 +87,8 @@ export function invokeFrnlEvent<TPayload = unknown, TResult = unknown>(
   const current = store.getState();
   const entity = current.entities[componentId];
   if (!entity) throw new Error('Unknown Frnl component: ' + componentId);
-  const definition = current.elementDefinitions[componentId];
-  if (!definition) throw new Error('No Frnl element definition registered for: ' + componentId);
+  const definition = current.componentDefinitions[componentId];
+  if (!definition) throw new Error('No Frnl component definition registered for: ' + componentId);
   const stateDefinition = definition.states[entity.state];
   if (!stateDefinition) throw new Error('Frnl component "' + componentId + '" has no definition for state "' + entity.state + '"');
   const eventDefinition = stateDefinition.events[eventName];
@@ -127,6 +127,6 @@ export function getFrnlEventAtPath(store: StoreApi<FrnlState>, path: FrnlCompone
 }
 
 export function registerFrnlComponent(store: StoreApi<FrnlState>, componentId: string, definition: FrnlComponentDefinition, parentId?: string): void {
-  store.getState().registerElementDefinition(componentId, definition);
+  store.getState().registerComponentDefinition(componentId, definition);
   store.getState().registerComponentParent(componentId, parentId);
 }
