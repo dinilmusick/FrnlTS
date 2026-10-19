@@ -44,7 +44,10 @@ export interface FrnlState {
   slotCollections: Record<string, SlotCollectionState>;
   events: FrnlEvent[];
   elementDefinitions: Record<string, FrnlElementDefinition>;
-  eventHandlers: Record<string, Record<string, (payload: unknown) => unknown>>;
+  eventHandlers: Record<string, Record<string, (
+    payload: unknown,
+    context: { readonly componentId: string; readonly state: string; setState(state: string): void; setVisualParameter(parameter: string, value: unknown): void; getLibrary<T = unknown>(address: string): T }
+  ) => unknown>>;
   componentParents: Record<string, string | undefined>;
   visualOverrides: Record<string, Record<string, unknown>>;
   libraries: Record<string, unknown>;
@@ -64,7 +67,10 @@ export interface FrnlState {
   triggerFlow: (flowId: string, compositeId: string, trigger: string, payload?: unknown) => void;
   emit: (event: FrnlEvent) => void;
   registerElementDefinition: (componentId: string, definition: FrnlElementDefinition) => void;
-  registerEventHandlers: (componentId: string, handlers: Record<string, (payload: unknown) => unknown>) => void;
+  registerEventHandlers: (componentId: string, handlers: Record<string, (
+    payload: unknown,
+    context: { readonly componentId: string; readonly state: string; setState(state: string): void; setVisualParameter(parameter: string, value: unknown): void; getLibrary<T = unknown>(address: string): T }
+  ) => unknown>) => void;
   unregisterEventHandlers: (componentId: string) => void;
   registerComponentParent: (componentId: string, parentId?: string) => void;
   unregisterEntity: (entityId: string) => void;
