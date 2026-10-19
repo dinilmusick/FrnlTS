@@ -11,15 +11,15 @@ Properties can be **overridable** and, where the semantic type permits, **modula
 
 The exact set of properties is extensible. The framework should not prematurely constrain State to a fixed property whitelist.
 
-## Primitive and constituent properties
+## Component and constituent properties
 
-Properties may belong to Bounds, Visual Assets, or other editable parts of a UI Primitive.
+Properties may belong to Bounds, Visual Assets, or other editable parts of a Component.
 
 For example, Visual Asset properties can be overridden and can use Curves for normalized temporal evolution.
 
 ## Slot properties
 
-A UI Composite's Slots also expose Properties.
+Components using Slots also expose Slot Properties.
 
 Slot Properties describe the relationship between the Slot and its occupant rather than the intrinsic definition of the occupant.
 
@@ -32,25 +32,23 @@ Typical Slot Properties include basic layout and transformation controls such as
 - ordering
 - alignment
 
-Slot Properties are therefore a semantic layout boundary. They let a parent Composite adjust an occupant without modifying the occupant's reusable definition.
+Slot Properties are therefore a semantic layout boundary. They let a parent component adjust an occupant without modifying the occupant's reusable definition.
 
 Slot Properties may be overridable and modulatable. A modulatable Slot Property can use a Curve with the same canonical one-second domain and Attack/Sustain/Release timing semantics used elsewhere in FRNL.
 
-For example, a Slot's position, scale, or rotation can be animated independently of the contained UI Primitive or UI Composite.
+For example, a Slot's position, scale, or rotation can be animated independently of the contained Component.
 
-## Composite properties
+## Component properties
 
-UI Composites may expose Properties for group-level semantic configuration.
-
-A Composite Property does not become a Visual Asset. Visual representation remains owned by contained UI Primitives.
+Components may expose Properties for semantic configuration.
 
 ## State interaction
 
-States may contain values for Properties that the entity exposes.
+States may contain values for Properties and Visual Parameters that the component exposes.
 
-For a Composite, a State may therefore affect Composite Properties or coordinate child Properties and States.
+A State may affect Component Properties, visual parameters, or coordinate child states.
 
-A Slot Property can participate in the same state/curve system, allowing a Composite State to alter or animate layout relationships without making the Composite itself a Visual Asset owner.
+A Slot Property can participate in the same state/curve system, allowing a Component State to alter or animate layout relationships.
 
 The property remains data; an Event represents an occurrence that can read or modify it; a Flow can coordinate those changes.
 

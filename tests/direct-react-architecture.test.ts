@@ -33,4 +33,37 @@ describe('direct React component architecture', () => {
     expect('FrnlPrimitive' in RuntimeExports).toBe(false);
     expect('FrnlComposite' in RuntimeExports).toBe(false);
   });
+
+  it('enforces component-only slot occupants and flow payloads without legacy kind/compositeId', () => {
+    const store = RuntimeExports.createFrnlStore();
+    expect('componentDefinitions' in store.getState()).toBe(true);
+    expect('elementDefinitions' in store.getState()).toBe(false);
+    expect('registerComponentDefinition' in store.getState()).toBe(true);
+    expect('registerElementDefinition' in store.getState()).toBe(false);
+
+    // Verify slotStateSchema has no occupantKind
+    const slotState = RuntimeExports.slotStateSchema.parse({
+      id: 'slot-1',
+      address: 'container.slot',
+      occupantId: 'child-1',
+      properties: {},
+    });
+    expect('occupantKind' in slotState).toBe(false);
+
+    // Verify flowTriggeredPayloadSchema uses componentId
+    const flowPayload = RuntimeExports.flowTriggeredPayloadSchema.parse({
+      flowId: 'flow-1',
+      componentId: 'comp-1',
+      trigger: 'click',
+    });
+    expect(flowPayload.componentId).toBe('comp-1');
+    expect('compositeId' in flowPayload).toBe(false);
+
+    // Verify entityStateSchema has no kind
+    const entityState = RuntimeExports.entityStateSchema.parse({
+      state: 'idle',
+      properties: {},
+    });
+    expect('kind' in entityState).toBe(false);
+  });
 });

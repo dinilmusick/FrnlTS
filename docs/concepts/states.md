@@ -2,19 +2,13 @@
 
 A State is a named definition of semantic configuration and editable property values.
 
-Both UI Primitives and UI Composites may define States.
+Components define States.
 
-## UI Primitive States
+## Component States
 
-For a UI Primitive, a State describes the primitive's editable property values and the configuration of its constituent parts.
+For a Component, a State describes editable property values, state-owned visual parameters, events, and phases.
 
-## UI Composite States
-
-A UI Composite State describes group-level semantic configuration for the Composite.
-
-A Composite State does not own Visual Assets. It may coordinate or represent changes to properties and/or States of entities in its Slots, but the actual visual representation remains owned by the affected UI Primitives.
-
-A Composite State may also affect Slot Properties. This allows a group state to change or animate the layout relationship of contained entities without giving the Composite its own Visual Assets.
+A parent component coordinating child components in its Slots may transition states to coordinate child components or affect Slot Properties without owning independent visual assets.
 
 For example:
 
@@ -23,21 +17,21 @@ For example:
     │   ├── coordinate child states
     │   ├── change submit Slot visibility/transform
     │   └── represent form-level submission status
-    └── no Visual Assets owned by LoginForm
+    └── visual representation owned by component definitions
 
 ## Slot State Events
 
-Because a Slot has its own Event boundary, a state transition of the entity occupying a Slot can produce a Slot-level State Changed event.
+Because a Slot has its own Event boundary, a state transition of the component occupying a Slot can produce a Slot-level State Changed event.
 
 This does not transfer State ownership to the Slot.
 
-    UI Primitive / UI Composite
-            │
-            └── State changes
-                    ↓
-                Slot.stateChanged
+    Component
+        │
+        └── State changes
+                ↓
+            Slot.stateChanged
 
-The entity remains the owner of its State; the Slot observes and exposes the Slot-level event.
+The component remains the owner of its State; the Slot observes and exposes the Slot-level event.
 
 ## Temporal semantics
 
