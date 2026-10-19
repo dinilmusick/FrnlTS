@@ -25,7 +25,9 @@ import {
   type SlotCollectionState,
   type FrnlEvent,
   type Bounds,
+  frnlThemeDefinitionSchema,
 } from './validation.js';
+import { validateFrnlThemeAgainstDefinition, type FrnlThemeDefinition } from './themes.js';
 
 export type {
   EntityKind,
@@ -50,6 +52,8 @@ export interface FrnlState {
   ) => unknown>>;
   componentParents: Record<string, string | undefined>;
   visualOverrides: Record<string, Record<string, unknown>>;
+  themes: Record<string, FrnlThemeDefinition>;
+  componentThemes: Record<string, string>;
   libraries: Record<string, unknown>;
   setEntityState: (entityId: string, state: string) => void;
   setEntityProperty: (entityId: string, key: string, value: unknown) => void;
@@ -67,6 +71,8 @@ export interface FrnlState {
   triggerFlow: (flowId: string, compositeId: string, trigger: string, payload?: unknown) => void;
   emit: (event: FrnlEvent) => void;
   registerElementDefinition: (componentId: string, definition: FrnlElementDefinition) => void;
+  registerTheme: (name: string, theme: FrnlThemeDefinition) => void;
+  applyTheme: (componentId: string, themeName: string) => void;
   registerEventHandlers: (componentId: string, handlers: Record<string, (
     payload: unknown,
     context: { readonly componentId: string; readonly state: string; setState(state: string): void; setVisualParameter(parameter: string, value: unknown): void; getLibrary<T = unknown>(address: string): T }
@@ -87,7 +93,7 @@ export function createFrnlStore(
   const initialSlots = z.record(z.string(), slotStateSchema).parse(initial?.slots ?? {});
   const initialCollections = z.record(z.string(), slotCollectionSchema).parse(initial?.slotCollections ?? {});
 
-  return createStore<FrnlState>((set) => ({
+  return createStore<FrnlState>((set, get) => ({
     entities: initialEntities,
     slots: initialSlots,
     slotCollections: initialCollections,
@@ -96,11 +102,46 @@ export function createFrnlStore(
     eventHandlers: {},
     componentParents: {},
     visualOverrides: {},
+    themes: {},
+    componentThemes: {},
     libraries: {},
 
     registerElementDefinition: (componentId, definition) => {
       const id = entityIdSchema.parse(componentId);
+      for (const theme of Object.values(get().themes)) {
+        validateFrnlThemeAgainstDefinition(theme, definition);
+      }
       set((current) => ({ elementDefinitions: { ...current.elementDefinitions, [id]: definition } }));
+    },
+
+    registerTheme: (name, theme) => {
+      const themeName = z.string().min(1).parse(name);
+      const validatedTheme = frnlThemeDefinitionSchema.parse(theme) as FrnlThemeDefinition;
+      for (const definition of Object.values(get().elementDefinitions)) {
+        validateFrnlThemeAgainstDefinition(validatedTheme, definition);
+      }
+      set((current) => ({
+        themes: { ...current.themes, [themeName]: validatedTheme },
+      }));
+    },
+
+    applyTheme: (componentId, themeName) => {
+      const id = entityIdSchema.parse(componentId);
+      const name = z.string().min(1).parse(themeName);
+      set((current) => {
+        if (!current.entities[id]) {
+          throw new Error(`Unknown Frnl component: ${id}`);
+        }
+        if (!current.themes[name]) {
+          throw new Error(`Unknown Frnl theme: ${name}`);
+        }
+        const visualOverrides = { ...current.visualOverrides };
+        delete visualOverrides[id];
+        return {
+          componentThemes: { ...current.componentThemes, [id]: name },
+          visualOverrides,
+        };
+      });
     },
 
     registerEventHandlers: (componentId, handlers) => {
