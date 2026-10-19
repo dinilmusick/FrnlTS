@@ -3,6 +3,7 @@ import type { FrnlComponentDefinition } from './component-definition.js';
 import type { FrnlState } from './store.js';
 import { getFrnlLibrary } from './libraries.js';
 import { applyFrnlTheme, resolveFrnlVisualParameters } from './themes.js';
+import { notifyFrnlEventListeners } from './orchestration.js';
 
 export type FrnlEventContext = {
   readonly componentId: string;
@@ -95,7 +96,29 @@ export function invokeFrnlEvent<TPayload = unknown, TResult = unknown>(
   if (!eventDefinition) throw new Error('Frnl component "' + componentId + '" has no event "' + eventName + '" in state "' + entity.state + '"');
   const handler = current.eventHandlers[componentId]?.[eventDefinition.functionId];
   if (!handler) throw new Error('No handler registered for Frnl event function "' + eventDefinition.functionId + '" on "' + componentId + '"');
-  return handler(payload, createEventContext(store, componentId)) as TResult | Promise<TResult>;
+  const result = handler(payload, createEventContext(store, componentId)) as TResult | Promise<TResult>;
+  if (result && typeof (result as Promise<TResult>).then === 'function') {
+    return (result as Promise<TResult>).then(async (resolved) => {
+      await notifyFrnlEventListeners(store, {
+        componentId,
+        eventName,
+        payload,
+        result: resolved,
+      });
+      return resolved;
+    }) as Promise<TResult>;
+  }
+
+  const notification = notifyFrnlEventListeners(store, {
+    componentId,
+    eventName,
+    payload,
+    result,
+  });
+  if (notification && typeof (notification as Promise<void>).then === 'function') {
+    return (notification as Promise<void>).then(() => result) as Promise<TResult>;
+  }
+  return result;
 }
 
 export function getFrnlEvent<TPayload = unknown, TResult = unknown>(
