@@ -8,9 +8,19 @@ export interface FrnlValidationDiagnostic {
   severity: FrnlValidationSeverity;
 }
 
+export interface FrnlPromotableAsset {
+  name: string;
+  kind: string;
+  filePath: string;
+  scope: 'component';
+  scopeName: string;
+  target: 'GutTS';
+}
+
 export interface FrnlValidationResult {
   errors: FrnlValidationDiagnostic[];
   warnings: FrnlValidationDiagnostic[];
   filesChecked: number;
   passed: boolean;
+  promotableAssets?: FrnlPromotableAsset[];
 }
