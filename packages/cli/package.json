@@ -1,5 +1,5 @@
 {
-  "name": "@dinilmusick/frnlts-cli",
+  "name": "@ultrst-armada/frnlts-cli",
   "version": "0.1.0",
   "private": false,
   "type": "module",
@@ -18,8 +18,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@dinilmusick/frnlts": "workspace:*",
-    "@dinilmusick/frnlts-validate": "workspace:*"
+    "@ultrst-armada/frnlts": "workspace:*",
+    "@ultrst-armada/frnlts-validate": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.4.0",

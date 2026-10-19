@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 describe('package distribution smoke test', () => {
-  it('imports built artifacts from @dinilmusick/frnlts distribution', async () => {
+  it('imports built artifacts from @ultrst-armada/frnlts distribution', async () => {
     const root = await import(path.join(rootDir, 'dist/index.js'));
     const react = await import(path.join(rootDir, 'dist/react/index.js'));
     const runtime = await import(path.join(rootDir, 'dist/runtime/index.js'));

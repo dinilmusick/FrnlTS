@@ -7,6 +7,17 @@ import { getFrnlComponentHandle, getFrnlEvent, getFrnlVisualParameters, type Frn
 
 const EMPTY_PROPERTIES: Record<string, unknown> = Object.freeze({});
 
+function arePropertiesEqual(a: Record<string, unknown>, b: Record<string, unknown>): boolean {
+  if (a === b) return true;
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+  for (const key of aKeys) {
+    if (a[key] !== b[key]) return false;
+  }
+  return true;
+}
+
 export interface UseFrnlComponentOptions {
   id: string;
   parentId?: string;
@@ -51,7 +62,8 @@ export function useFrnlComponent({
       store.getState().setEntityState(id, state);
     }
 
-    if (resolvedProperties !== previous.properties) {
+    const hasChangedProperties = !arePropertiesEqual(resolvedProperties, previous.properties);
+    if (hasChangedProperties) {
       store.getState().setEntityProperties(id, resolvedProperties);
     }
 
