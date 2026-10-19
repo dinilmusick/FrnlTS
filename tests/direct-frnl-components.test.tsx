@@ -35,6 +35,8 @@ const buttonDefinition = defineFrnlElement({
   },
 });
 
+let latestFrnl: ReturnType<typeof useFrnlComponent> | undefined;
+
 function TestButton({ store }: { store: ReturnType<typeof createFrnlStore> }) {
   const frnl = useFrnlComponent({
     id: 'button-1',
@@ -49,6 +51,8 @@ function TestButton({ store }: { store: ReturnType<typeof createFrnlStore> }) {
       'button.loading.click': () => 'loading-clicked',
     },
   });
+
+  latestFrnl = frnl;
 
   return (
     <button data-testid="button" data-state={frnl.state} data-opacity={String(frnl.visualParameters.opacity)} onClick={() => frnl.events.click(undefined)}>
@@ -110,7 +114,7 @@ describe('direct Frnl React components', () => {
       store.getState().registerTheme('Dark', {
         button: { states: { idle: { visualParameters: { opacity: 0.25 } } } },
       });
-      store.getState().applyTheme('button-1', 'Dark');
+      latestFrnl?.applyTheme('Dark');
     });
 
     expect(screen.getByTestId('button')).toHaveAttribute('data-state', 'idle');
