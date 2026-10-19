@@ -13,7 +13,7 @@ A callable semantic occurrence resolved against a component's current State befo
 A Frnl component may reference another component as its semantic parent for event addressing. This relationship does not control React children or layout.
 
 ## Flow
-Frontend orchestration that coordinates component Events, Slot Events, state changes, properties, data, and external functions.
+Frontend orchestration that coordinates component Events, state changes, properties, data, and external functions.
 
 ## Theme
 Named visual data applied to component instances. Theme values override state visual parameters while surgical instance overrides remain highest priority.
