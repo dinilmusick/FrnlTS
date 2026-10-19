@@ -1,5 +1,4 @@
-export { FrnlPrimitive } from './FrnlPrimitive.js';
-export type { FrnlPrimitiveProps } from './FrnlPrimitive.js';
-export { FrnlComposite, FrnlSlot } from './FrnlComposite.js';
-export type { FrnlCompositeProps, FrnlSlotProps } from './FrnlComposite.js';
-export * from './validation.js';
+export { useFrnlComponent } from './useFrnlComponent.js';
+export type { UseFrnlComponentOptions } from './useFrnlComponent.js';
+export { FrnlSlot } from './FrnlSlot.js';
+export type { FrnlSlotProps } from './FrnlSlot.js';
