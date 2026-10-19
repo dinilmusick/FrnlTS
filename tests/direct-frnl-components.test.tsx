@@ -1,16 +1,15 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import React from 'react';
 import { act, cleanup, render, screen } from '@testing-library/react';
-import { defineFrnlElement } from '../src/elements/definition.js';
+import { defineFrnlComponent } from '../src/runtime/component-definition.js';
 import { getFrnlEvent } from '../src/runtime/events.js';
 import { createFrnlStore } from '../src/runtime/store.js';
 import { useFrnlComponent } from '../src/react/useFrnlComponent.js';
 
 afterEach(cleanup);
 
-const buttonDefinition = defineFrnlElement({
+const buttonDefinition = defineFrnlComponent({
   name: 'button',
-  kind: 'primitive',
   states: {
     idle: {
       name: 'idle',
@@ -137,7 +136,7 @@ describe('direct Frnl React components', () => {
     const { unmount } = render(<TestButton store={store} />);
 
     expect(store.getState().entities['button-1']).toBeDefined();
-    expect(store.getState().elementDefinitions['button-1']).toBeDefined();
+    expect(store.getState().componentDefinitions['button-1']).toBeDefined();
     expect(store.getState().eventHandlers['button-1']).toBeDefined();
 
     act(() => {
@@ -156,7 +155,7 @@ describe('direct Frnl React components', () => {
     });
 
     expect(store.getState().entities['button-1']).toBeUndefined();
-    expect(store.getState().elementDefinitions['button-1']).toBeUndefined();
+    expect(store.getState().componentDefinitions['button-1']).toBeUndefined();
     expect(store.getState().eventHandlers['button-1']).toBeUndefined();
     expect(store.getState().visualOverrides['button-1']).toBeUndefined();
     expect(store.getState().componentParents['button-1']).toBeUndefined();
