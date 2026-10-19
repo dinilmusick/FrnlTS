@@ -16,12 +16,11 @@ Backend                                      Frontend
 
 KrnlTS                                       FrnlTS
   │                                            │
-  │ Service                                    │ FrnlPrimitive
-  │ Service                                    │ FrnlComposite
-  │ Orchestration                              │ Slot
-  │ State                                      │ State
-  │ Events                                     │ Events
-  │                                            │ Flows
+  │ Service                                    │ React Components
+  │ Service                                    │ Frnl State
+  │ Orchestration                              │ Frnl Events
+  │ State                                      │ Slots
+  │ Events                                     │ Flows
   ▼                                            ▼
 Applications                                 Applications
 
@@ -86,7 +85,7 @@ external input / event
         ↓
 validated semantic data
         ↓
-Zustand runtime (Primitive / Composite / Slot / Event / Flow)
+Zustand runtime (component state / Slot / Event / Flow)
 ```
 
 - `createFrnlStore(initial?)`: strictly validates initial entities and slots.
