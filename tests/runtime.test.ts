@@ -707,8 +707,8 @@ describe('FrnlTS Frontend Runtime Suite', () => {
     });
 
     it('keeps React adapter separate with zero React pollution in core runtime', () => {
-      expect(ReactExports.FrnlPrimitive).toBeDefined();
-      expect(ReactExports.FrnlComposite).toBeDefined();
+      expect(ReactExports.useFrnlComponent).toBeDefined();
+      expect(ReactExports.FrnlSlot).toBeDefined();
 
       // Runtime exports must NOT include React components
       expect((RuntimeExports as any).FrnlPrimitive).toBeUndefined();
