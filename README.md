@@ -17,7 +17,7 @@ React component
     │      ├── state-resolved events
     │      ├── visual parameters
     │      └── component scope
-    └── FrnlSlot where structural composition is required
+    └── normal React composition
              │
              ▼
         Zustand-backed runtime
@@ -30,7 +30,6 @@ There is one component model. A component may render children, use slots, partic
 - **React components** are the concrete UI entities.
 - **States** own state-local events, visual parameters, and Attack/Sustain/Release definitions.
 - **Events** resolve against the component's current state before invoking the registered handler.
-- **Slots** are stable addressable layout/replacement boundaries for rendered component content.
 - **Flows** coordinate events, state changes, slot changes, data, and external functions.
 - **Themes** provide optional visual parameter overrides for named components and states.
 - **Libraries** provide centrally addressable component/application functions and data.
@@ -75,7 +74,6 @@ The input source does not directly own the handler implementation.
 
 ## Slots
 
-`FrnlSlot` is a React component backed by the same store. It provides a stable address, slot properties, occupant replacement, and slot lifecycle events without wrapping the occupant component.
 
 ## Themes
 
@@ -99,6 +97,6 @@ External semantic inputs and runtime mutations cross Zod validation boundaries b
 
 - `@dinilmusick/frnlts` — semantic runtime and component contracts.
 - `@dinilmusick/frnlts/runtime` — headless runtime.
-- `@dinilmusick/frnlts/react` — `useFrnlComponent` and `FrnlSlot`.
+- `@dinilmusick/frnlts/react` — `useFrnlComponent` and direct React integration.
 
 Concrete UI remains ordinary React code.
