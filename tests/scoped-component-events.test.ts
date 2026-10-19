@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { defineFrnlElement } from '../src/elements/definition.js';
+import { defineFrnlComponent } from '../src/runtime/component-definition.js';
 import {
   getFrnlComponentHandle,
   getFrnlEventAtPath,
 } from '../src/runtime/events.js';
 import { createFrnlStore } from '../src/runtime/store.js';
 
-const definition = defineFrnlElement({
+const definition = defineFrnlComponent({
   name: 'button',
-  kind: 'primitive',
   states: {
     idle: {
       name: 'idle',
@@ -27,24 +26,21 @@ describe('Frnl component scope', () => {
   it('builds a typed component handle from the registered parent hierarchy', () => {
     const store = createFrnlStore();
     store.getState().registerEntity('page-1', {
-      kind: 'composite',
-      state: 'idle',
+            state: 'idle',
       properties: {},
     });
     store.getState().registerEntity('layout-1', {
-      kind: 'composite',
-      state: 'idle',
+            state: 'idle',
       properties: {},
     });
     store.getState().registerEntity('button-1', {
-      kind: 'primitive',
-      state: 'idle',
+            state: 'idle',
       properties: {},
     });
 
     store.getState().registerComponentParent('layout-1', 'page-1');
     store.getState().registerComponentParent('button-1', 'layout-1');
-    store.getState().registerElementDefinition('button-1', definition);
+    store.getState().registerComponentDefinition('button-1', definition);
     store.getState().registerEventHandlers('button-1', {
       'button.idle.click': () => 'clicked',
     });
@@ -58,17 +54,15 @@ describe('Frnl component scope', () => {
   it('rejects a path that does not match the registered hierarchy', () => {
     const store = createFrnlStore();
     store.getState().registerEntity('page-1', {
-      kind: 'composite',
-      state: 'idle',
+            state: 'idle',
       properties: {},
     });
     store.getState().registerEntity('button-1', {
-      kind: 'primitive',
-      state: 'idle',
+            state: 'idle',
       properties: {},
     });
     store.getState().registerComponentParent('button-1', 'page-1');
-    store.getState().registerElementDefinition('button-1', definition);
+    store.getState().registerComponentDefinition('button-1', definition);
     store.getState().registerEventHandlers('button-1', {
       'button.idle.click': () => 'clicked',
     });
