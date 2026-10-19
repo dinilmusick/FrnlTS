@@ -3,7 +3,7 @@
   "version": "0.2.2",
   "private": false,
   "type": "module",
-  "description": "Frnl React component framework with Zustand-backed state and globally addressable state-resolved events.",
+  "description": "Frnl React component framework with Zustand-backed state, hierarchical component scopes, and state-resolved addressable events.",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
