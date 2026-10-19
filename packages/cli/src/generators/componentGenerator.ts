@@ -166,7 +166,7 @@ export function generateEvent(componentName: string, state: string, event: strin
     eventsSource = `import { ${state}${event} } from './States/${state}/Events/${event}.js';\n` + eventsSource;
   }
   if (!eventsSource.includes(`'${componentName}.${state}.${event}':`)) {
-    eventsSource = eventsSource.replace(/export const eventHandlers = \\{/,
+    eventsSource = eventsSource.replace(/export const eventHandlers = \{/,
       `export const eventHandlers = {\n  '${componentName}.${state}.${event}': ${state}${event},`);
   }
   fs.writeFileSync(eventsFile, eventsSource);
