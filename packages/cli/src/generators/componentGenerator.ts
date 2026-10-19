@@ -110,3 +110,48 @@ export { definition } from './definition.js';
 
   return componentDir;
 }
+
+export function generateState(componentName: string, state: string, projectRoot: string): string {
+  const componentDir = path.join(projectRoot, 'components', componentName);
+  if (!fs.existsSync(componentDir)) throw new Error('Unknown Frnl component: ' + componentName);
+  const stateDir = path.join(componentDir, 'States', state);
+  fs.mkdirSync(path.join(stateDir, 'Events'), { recursive: true });
+  write(path.join(stateDir, 'state.ts'), `import type { FrnlStateDefinition } from '@dinilmusick/frnlts';
+
+export const ${state}State: FrnlStateDefinition = {
+  name: '${state}',
+  visualParameters: {},
+  events: {},
+  phases: {
+    attackPhase: { visualDefinition: { parameters: {} } },
+    sustainPhase: { visualDefinition: { parameters: {} } },
+    releasePhase: { visualDefinition: { parameters: {} } },
+  },
+};
+`);
+  write(path.join(stateDir, 'VisualParameters.ts'), `export const ${state}VisualParameters = {} as const;
+`);
+  return stateDir;
+}
+
+export function generateEvent(componentName: string, state: string, event: string, projectRoot: string): string {
+  const componentDir = path.join(projectRoot, 'components', componentName);
+  const eventFile = path.join(componentDir, 'States', state, 'Events', `${event}.ts`);
+  if (!fs.existsSync(path.join(componentDir, componentName + '.tsx'))) throw new Error('Unknown Frnl component: ' + componentName);
+  if (!fs.existsSync(path.dirname(eventFile))) fs.mkdirSync(path.dirname(eventFile), { recursive: true });
+  write(eventFile, `export function ${state}${event}(payload: unknown, context: import('@dinilmusick/frnlts').FrnlEventContext): unknown {
+  void payload;
+  void context;
+}
+`);
+  return eventFile;
+}
+
+export function generateLibrary(componentName: string, category: 'functions' | 'data' | 'structs', name: string, projectRoot: string): string {
+  const componentDir = path.join(projectRoot, 'components', componentName);
+  if (!fs.existsSync(path.join(componentDir, componentName + '.tsx'))) throw new Error('Unknown Frnl component: ' + componentName);
+  const file = path.join(componentDir, 'Libraries', category, name + '.ts');
+  write(file, `export {};
+`);
+  return file;
+}
