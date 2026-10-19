@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-export const entityKindSchema = z.enum(['primitive', 'composite']);
 export const entityIdSchema = z.string().min(1);
 export const stateNameSchema = z.string().min(1);
 export const propertyKeySchema = z.string().min(1);
@@ -41,7 +40,6 @@ export const visualAssetSchema = z.object({
 });
 
 export const entityStateSchema = z.object({
-  kind: entityKindSchema,
   state: stateNameSchema,
   properties: propertiesSchema,
   bounds: boundsSchema.optional(),
@@ -50,14 +48,12 @@ export const entityStateSchema = z.object({
 
 export const occupantSchema = z.object({
   id: entityIdSchema,
-  kind: entityKindSchema,
 });
 
 export const slotStateSchema = z.object({
   id: entityIdSchema,
   address: z.string().min(1),
   occupantId: entityIdSchema.nullable(),
-  occupantKind: entityKindSchema.nullable(),
   properties: propertiesSchema,
 });
 
@@ -109,7 +105,7 @@ export const slotCollectionChangedPayloadSchema = z.object({
 
 export const flowTriggeredPayloadSchema = z.object({
   flowId: z.string().min(1),
-  compositeId: entityIdSchema,
+  componentId: entityIdSchema,
   trigger: z.string().min(1),
   payload: propertyValueSchema.optional(),
 });
@@ -124,7 +120,6 @@ export const frnlEventSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('flow.triggered'), payload: flowTriggeredPayloadSchema }),
 ]);
 
-export type EntityKind = z.infer<typeof entityKindSchema>;
 export type EntityState = z.infer<typeof entityStateSchema>;
 export type SlotState = z.infer<typeof slotStateSchema>;
 export type SlotCollectionState = z.infer<typeof slotCollectionSchema>;
