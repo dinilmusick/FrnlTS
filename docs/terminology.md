@@ -9,11 +9,8 @@ A named component configuration containing state-local Events, visual parameters
 ## Event
 A callable semantic occurrence resolved against a component's current State before invoking its registered handler.
 
-## Slot
-A named, addressable position backed by the Frnl store. A Slot can point at a component instance and can replace that occupant without changing the Slot identity.
-
-## Slot Property
-A property controlling the relationship between a Slot and its occupant, such as position, scale, rotation, visibility, ordering, or alignment.
+## Semantic Parent
+A Frnl component may reference another component as its semantic parent for event addressing. This relationship does not control React children or layout.
 
 ## Flow
 Frontend orchestration that coordinates component Events, Slot Events, state changes, properties, data, and external functions.
@@ -23,9 +20,6 @@ Named visual data applied to component instances. Theme values override state vi
 
 ## Function
 Application or library logic invoked by an Event or Flow. FrnlTS defines invocation semantics, not business logic.
-
-## Bounds
-The semantic interaction extent of a component.
 
 ## Visual Asset
 Renderer-facing visual data associated with a component or state. FrnlTS defines semantic visual parameters; ordinary React rendering remains responsible for producing pixels.
