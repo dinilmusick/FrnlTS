@@ -1,4 +1,5 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
+import type { FrnlElementDefinition } from '../elements/definition.js';
 import { z } from 'zod';
 import {
   entityIdSchema,
@@ -42,6 +43,8 @@ export interface FrnlState {
   slots: Record<string, SlotState>;
   slotCollections: Record<string, SlotCollectionState>;
   events: FrnlEvent[];
+  elementDefinitions: Record<string, FrnlElementDefinition>;
+  eventHandlers: Record<string, Record<string, (payload: unknown) => unknown>>;
   setEntityState: (entityId: string, state: string) => void;
   setEntityProperty: (entityId: string, key: string, value: unknown) => void;
   setEntityProperties: (entityId: string, properties: Record<string, unknown>) => void;
@@ -57,6 +60,9 @@ export interface FrnlState {
   removeSlotFromCollection: (collectionId: string, slotId: string) => void;
   triggerFlow: (flowId: string, compositeId: string, trigger: string, payload?: unknown) => void;
   emit: (event: FrnlEvent) => void;
+  registerElementDefinition: (componentId: string, definition: FrnlElementDefinition) => void;
+  registerEventHandlers: (componentId: string, handlers: Record<string, (payload: unknown) => unknown>) => void;
+  unregisterEventHandlers: (componentId: string) => void;
 }
 
 export function createFrnlStore(
@@ -71,6 +77,27 @@ export function createFrnlStore(
     slots: initialSlots,
     slotCollections: initialCollections,
     events: [],
+    elementDefinitions: {},
+    eventHandlers: {},
+
+    registerElementDefinition: (componentId, definition) => {
+      const id = entityIdSchema.parse(componentId);
+      set((current) => ({ elementDefinitions: { ...current.elementDefinitions, [id]: definition } }));
+    },
+
+    registerEventHandlers: (componentId, handlers) => {
+      const id = entityIdSchema.parse(componentId);
+      set((current) => ({ eventHandlers: { ...current.eventHandlers, [id]: handlers } }));
+    },
+
+    unregisterEventHandlers: (componentId) => {
+      const id = entityIdSchema.parse(componentId);
+      set((current) => {
+        const next = { ...current.eventHandlers };
+        delete next[id];
+        return { eventHandlers: next };
+      });
+    },
 
     emit: (event) => {
       const validated = frnlEventSchema.parse(event);
