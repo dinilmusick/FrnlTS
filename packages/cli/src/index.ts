@@ -1,12 +1,13 @@
 import { generateComponent, generateEvent, generateLibrary, generateState } from './generators/componentGenerator.js';
 import { generateOrchestration } from './generators/orchestrationGenerator.js';
+import { generatePage } from './generators/pageGenerator.js';
 import { runBuild } from './commands/build.js';
 import { runDev } from './commands/dev.js';
 import { inspectComponent } from './commands/inspect.js';
 import { runValidate } from './commands/validate.js';
 import { runWatch } from './commands/watch.js';
 
-export { generateComponent, generateState, generateEvent, generateLibrary, generateOrchestration, runBuild, runDev, inspectComponent, runValidate, runWatch };
+export { generateComponent, generateState, generateEvent, generateLibrary, generateOrchestration, generatePage, runBuild, runDev, inspectComponent, runValidate, runWatch };
 
 export async function runFrnlCli(argv: string[] = process.argv.slice(2)): Promise<number> {
   const [command, type, name, ...rest] = argv;
@@ -37,6 +38,12 @@ export async function runFrnlCli(argv: string[] = process.argv.slice(2)): Promis
     return 0;
   }
 
+  if (command === 'generate' && type === 'page' && name) {
+    generatePage(name, root);
+    console.log('Created Frnl page ' + name + '.');
+    return 0;
+  }
+
   if (command === 'validate') return runValidate(root);
   if (command === 'build') return runBuild(root);
   if (command === 'dev') return runDev(root);
@@ -49,6 +56,6 @@ export async function runFrnlCli(argv: string[] = process.argv.slice(2)): Promis
     return 0;
   }
 
-  console.error('Usage: frnl generate component <Name> [--state=Idle] [--event=Click] | frnl generate state <Component> <State> | frnl generate event <Component> <State> <Event> | frnl generate library <Component> <functions|data|structs> <Name> | frnl generate orchestration <Page> <Orchestration> | frnl validate | frnl build | frnl dev | frnl watch | frnl inspect component <Name>');
+  console.error('Usage: frnl generate component <Name> [--state=Idle] [--event=Click] | frnl generate state <Component> <State> | frnl generate event <Component> <State> <Event> | frnl generate library <Component> <functions|data|structs> <Name> | frnl generate orchestration <Page> <Orchestration> | frnl generate page <Page> | frnl validate | frnl build | frnl dev | frnl watch | frnl inspect component <Name>');
   return 1;
 }
