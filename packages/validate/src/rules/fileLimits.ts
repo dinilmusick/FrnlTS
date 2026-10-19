@@ -1,4 +1,4 @@
-import ts from 'typescript';
+import * as ts from 'typescript';
 import type { FrnlValidationDiagnostic } from '../types.js';
 
 export const FRNL_COMPONENT_MAX_LINES = 199;
