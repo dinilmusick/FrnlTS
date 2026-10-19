@@ -13,6 +13,7 @@ const definition = defineFrnlElement({
     idle: {
       name: 'idle',
       events: { click: { functionId: 'button.idle.click' } },
+      visualParameters: { opacity: 1 },
       phases: {
         attackPhase: { visualDefinition: { parameters: {} } },
         sustainPhase: { visualDefinition: { parameters: {} } },

@@ -11,6 +11,7 @@ export const exampleButton = defineFrnlElement({
     idle: {
       name: 'idle',
       events: { click: clickEvent },
+      visualParameters: { opacity: 1 },
       phases: {
         attackPhase: { visualDefinition: attackVisualDefinition },
         sustainPhase: { visualDefinition: sustainVisualDefinition },

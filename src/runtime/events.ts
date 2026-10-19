@@ -16,6 +16,10 @@ export type FrnlEventHandler<TPayload = unknown, TResult = unknown> = (
   context: FrnlEventContext,
 ) => TResult | Promise<TResult>;
 
+export type FrnlEventTrigger<TPayload = unknown, TResult = unknown> = (
+  payload?: TPayload,
+) => TResult | Promise<TResult>;
+
 export type FrnlComponentPath = readonly string[];
 export type FrnlComponentAddress = { readonly path: FrnlComponentPath; readonly componentId: string };
 export type FrnlEventInvocation = { componentId: string; path: FrnlComponentPath; eventName: string; state: string; functionId: string };
@@ -25,7 +29,7 @@ type EventName<TDefinition extends FrnlElementDefinition> =
 
 export type FrnlComponentHandle<TDefinition extends FrnlElementDefinition = FrnlElementDefinition> = {
   readonly address: FrnlComponentAddress;
-  event<TEventName extends EventName<TDefinition>>(eventName: TEventName): FrnlEventHandler;
+  event<TEventName extends EventName<TDefinition>>(eventName: TEventName): FrnlEventTrigger;
   setState(state: string): void;
   setVisualParameter(parameter: string, value: unknown): void;
 };
@@ -94,8 +98,8 @@ export function invokeFrnlEvent<TPayload = unknown, TResult = unknown>(
 
 export function getFrnlEvent<TPayload = unknown, TResult = unknown>(
   store: StoreApi<FrnlState>, componentId: string, eventName: string,
-): FrnlEventHandler<TPayload, TResult> {
-  return (payload: TPayload) => invokeFrnlEvent<TPayload, TResult>(store, componentId, eventName, payload);
+): FrnlEventTrigger<TPayload, TResult> {
+  return (payload?: TPayload) => invokeFrnlEvent<TPayload, TResult>(store, componentId, eventName, payload as TPayload);
 }
 
 export function getFrnlComponentHandle<TDefinition extends FrnlElementDefinition>(
@@ -109,7 +113,7 @@ export function getFrnlComponentHandle<TDefinition extends FrnlElementDefinition
   };
 }
 
-export function getFrnlEventAtPath(store: StoreApi<FrnlState>, path: FrnlComponentPath, eventName: string): FrnlEventHandler {
+export function getFrnlEventAtPath(store: StoreApi<FrnlState>, path: FrnlComponentPath, eventName: string): FrnlEventTrigger {
   if (path.length === 0) throw new Error('Frnl component path cannot be empty');
   const componentId = path[path.length - 1];
   const actualPath = resolveComponentPath(store, componentId);

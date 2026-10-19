@@ -10,6 +10,7 @@ const state = (functionId: string) => ({
   events: {
     click: { functionId },
   },
+  visualParameters: { opacity: 1 },
   phases: {
     attackPhase: { visualDefinition: { parameters: { opacity: 0 } } },
     sustainPhase: { visualDefinition: { parameters: { opacity: 1 } } },

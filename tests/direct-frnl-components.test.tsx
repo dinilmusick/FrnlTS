@@ -15,6 +15,7 @@ const buttonDefinition = defineFrnlElement({
     idle: {
       name: 'idle',
       events: { click: { functionId: 'button.idle.click' } },
+      visualParameters: { opacity: 1 },
       phases: {
         attackPhase: { visualDefinition: { parameters: {} } },
         sustainPhase: { visualDefinition: { parameters: {} } },
@@ -24,6 +25,7 @@ const buttonDefinition = defineFrnlElement({
     loading: {
       name: 'loading',
       events: { click: { functionId: 'button.loading.click' } },
+      visualParameters: { opacity: 0.5 },
       phases: {
         attackPhase: { visualDefinition: { parameters: {} } },
         sustainPhase: { visualDefinition: { parameters: {} } },
@@ -98,5 +100,27 @@ describe('direct Frnl React components', () => {
     });
 
     expect(store.getState().entities['button-1']?.state).toBe('loading');
+  });
+
+  it('cleans up runtime entity, definition, handlers, and visual overrides on unmount', () => {
+    const store = createFrnlStore();
+    const { unmount } = render(<TestButton store={store} />);
+
+    expect(store.getState().entities['button-1']).toBeDefined();
+    expect(store.getState().elementDefinitions['button-1']).toBeDefined();
+    expect(store.getState().eventHandlers['button-1']).toBeDefined();
+
+    store.getState().setVisualOverride('button-1', 'opacity', 0.2);
+    expect(store.getState().visualOverrides['button-1']?.opacity).toBe(0.2);
+
+    act(() => {
+      unmount();
+    });
+
+    expect(store.getState().entities['button-1']).toBeUndefined();
+    expect(store.getState().elementDefinitions['button-1']).toBeUndefined();
+    expect(store.getState().eventHandlers['button-1']).toBeUndefined();
+    expect(store.getState().visualOverrides['button-1']).toBeUndefined();
+    expect(store.getState().componentParents['button-1']).toBeUndefined();
   });
 });

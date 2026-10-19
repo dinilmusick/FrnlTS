@@ -58,4 +58,22 @@ describe('Frnl state-owned visuals and libraries', () => {
     getFrnlEvent(store, 'button', 'click')({});
     expect(store.getState().entities.button.state).toBe('Loading');
   });
+
+  it('allows event functions to set visual parameters and access libraries through context', () => {
+    const store = createFrnlStore();
+    registerFrnlLibrary(store, 'Button.functions', {
+      computeOpacity: () => 0.42,
+    });
+    store.getState().registerEntity('button', { kind: 'primitive', state: 'Idle', properties: {} });
+    store.getState().registerElementDefinition('button', definition);
+    store.getState().registerEventHandlers('button', {
+      'Button.Idle.click': (_payload, context) => {
+        const lib = context.getLibrary<{ computeOpacity: () => number }>('Button.functions');
+        context.setVisualParameter('opacity', lib.computeOpacity());
+      },
+    });
+
+    getFrnlEvent(store, 'button', 'click')({});
+    expect(getFrnlVisualParameters(store, 'button').opacity).toBe(0.42);
+  });
 });

@@ -162,7 +162,7 @@ export function generateEvent(componentName: string, state: string, event: strin
     fs.writeFileSync(stateFile, stateSource);
   }
   const eventsFile = path.join(componentDir, 'events.ts');
-  let eventsSource = fs.existsSync(eventsFile) ? fs.readFileSync(eventsFile, 'utf8') : '';
+  let eventsSource = fs.existsSync(eventsFile) ? fs.readFileSync(eventsFile, 'utf8') : 'export const eventHandlers = {\n};\n';
   if (!eventsSource.includes(`./States/${state}/Events/${event}.js`)) {
     eventsSource = `import { ${state}${event} } from './States/${state}/Events/${event}.js';\n` + eventsSource;
   }
@@ -180,5 +180,14 @@ export function generateLibrary(componentName: string, category: 'functions' | '
   const file = path.join(componentDir, 'Libraries', category, name + '.ts');
   write(file, `export {};
 `);
+  const categoryIndex = path.join(componentDir, 'Libraries', category, 'index.ts');
+  if (fs.existsSync(categoryIndex)) {
+    let indexSource = fs.readFileSync(categoryIndex, 'utf8');
+    const exportStatement = `export * from './${name}.js';\n`;
+    if (!indexSource.includes(exportStatement)) {
+      indexSource += exportStatement;
+      fs.writeFileSync(categoryIndex, indexSource);
+    }
+  }
   return file;
 }
