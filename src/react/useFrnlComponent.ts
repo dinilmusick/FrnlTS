@@ -3,7 +3,7 @@ import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
 import type { FrnlElementDefinition } from '../elements/definition.js';
 import type { FrnlState } from '../runtime/store.js';
-import { getFrnlComponentHandle, getFrnlEvent, getFrnlVisualParameters } from '../runtime/events.js';
+import { getFrnlComponentHandle, getFrnlEvent, getFrnlVisualParameters, type FrnlEventHandler } from '../runtime/events.js';
 
 const EMPTY_PROPERTIES: Record<string, unknown> = Object.freeze({});
 
@@ -15,7 +15,7 @@ export interface UseFrnlComponentOptions {
   state?: string;
   properties?: Record<string, unknown>;
   bounds?: { width?: number | string; height?: number | string };
-  handlers: Record<string, (payload: unknown) => unknown>;
+  handlers: Record<string, FrnlEventHandler>;
 }
 
 export function useFrnlComponent({
