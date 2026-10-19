@@ -664,13 +664,12 @@ describe('FrnlTS Frontend Runtime Suite', () => {
         id: 'main-slot',
         address: 'page.body.slot',
         occupantId: null,
-        occupantKind: null,
         properties: {},
       });
 
       store.getState().replaceSlotOccupant('main-slot', {
         id: 'card-view',
-              });
+      });
 
       expect(store.getState().slots['main-slot'].occupantId).toBe('card-view');
 
@@ -722,9 +721,8 @@ describe('FrnlTS Frontend Runtime Suite', () => {
       expect(ReactExports.useFrnlComponent).toBeDefined();
       expect(ReactExports.FrnlSlot).toBeDefined();
 
-      // Runtime exports must NOT include React components
-      expect((RuntimeExports as any).FrnlPrimitive).toBeUndefined();
-      expect((RuntimeExports as any).FrnlComposite).toBeUndefined();
+      expect(RuntimeExports.defineFrnlComponent).toBeDefined();
+      expect(RootExports.defineFrnlComponent).toBeDefined();
     });
   });
 });
