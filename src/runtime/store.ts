@@ -259,7 +259,7 @@ export function createFrnlStore(
      *
      * Semantic Authority Model:
      * - Declarative Metadata: `address`, `properties`.
-     * - Runtime-Owned: `occupantId`, `occupantKind` (preserved if already set in runtime).
+     * - Runtime-Owned: `occupantId` (preserved if already set in runtime).
      */
     registerSlot: (slotId, slot) => {
       const id = entityIdSchema.parse(slotId);
