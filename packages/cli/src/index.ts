@@ -1,11 +1,11 @@
-import { generateComponent } from './generators/componentGenerator.js';
+import { generateComponent, generateEvent, generateLibrary, generateState } from './generators/componentGenerator.js';
 import { runBuild } from './commands/build.js';
 import { runDev } from './commands/dev.js';
 import { inspectComponent } from './commands/inspect.js';
 import { runValidate } from './commands/validate.js';
 import { runWatch } from './commands/watch.js';
 
-export { generateComponent, runBuild, runDev, inspectComponent, runValidate, runWatch };
+export { generateComponent, generateState, generateEvent, generateLibrary, runBuild, runDev, inspectComponent, runValidate, runWatch };
 
 export async function runFrnlCli(argv: string[] = process.argv.slice(2)): Promise<number> {
   const [command, type, name, ...rest] = argv;
@@ -16,6 +16,19 @@ export async function runFrnlCli(argv: string[] = process.argv.slice(2)): Promis
     const events = rest.filter((arg) => arg.startsWith('--event=')).map((arg) => arg.slice(8));
     generateComponent(name, root, { states, events });
     console.log('Created Frnl component ' + name + '.');
+    return 0;
+  }
+
+  if (command === 'generate' && type === 'state' && name && rest[0]) {
+    generateState(name, rest[0], root);
+    return 0;
+  }
+  if (command === 'generate' && type === 'event' && name && rest[0] && rest[1]) {
+    generateEvent(name, rest[0], rest[1], root);
+    return 0;
+  }
+  if (command === 'generate' && type === 'library' && name && rest[0] && rest[1] && ['functions', 'data', 'structs'].includes(rest[0])) {
+    generateLibrary(name, rest[0] as 'functions' | 'data' | 'structs', rest[1], root);
     return 0;
   }
 
@@ -31,6 +44,6 @@ export async function runFrnlCli(argv: string[] = process.argv.slice(2)): Promis
     return 0;
   }
 
-  console.error('Usage: frnl generate component <Name> [--state=Idle] [--event=Click] | frnl validate | frnl build | frnl dev | frnl watch | frnl inspect component <Name>');
+  console.error('Usage: frnl generate component <Name> [--state=Idle] [--event=Click] | frnl generate state <Component> <State> | frnl generate event <Component> <State> <Event> | frnl generate library <Component> <functions|data|structs> <Name> | frnl validate | frnl build | frnl dev | frnl watch | frnl inspect component <Name>');
   return 1;
 }
