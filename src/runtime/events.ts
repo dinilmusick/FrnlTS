@@ -57,6 +57,14 @@ function createEventContext(store: StoreApi<FrnlState>, componentId: string): Fr
   };
 }
 
+export function setFrnlVisualParameter(store: StoreApi<FrnlState>, address: string, value: unknown): void {
+  const separator = address.lastIndexOf('.');
+  if (separator <= 0 || separator === address.length - 1) {
+    throw new Error('Frnl visual parameter address must be componentName.paramName');
+  }
+  store.getState().setVisualOverride(address.slice(0, separator), address.slice(separator + 1), value);
+}
+
 export function getFrnlVisualParameters(store: StoreApi<FrnlState>, componentId: string): Record<string, unknown> {
   const current = store.getState();
   const entity = current.entities[componentId];
