@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createFrnlStore } from '../src/runtime/store.js';
 import { defineFrnlElement } from '../src/elements/definition.js';
-import { getFrnlEvent, getFrnlVisualParameters, registerFrnlLibrary } from '../src/runtime/index.js';
+import { getFrnlEvent, getFrnlVisualParameters, registerFrnlLibrary, setFrnlVisualParameter } from '../src/runtime/index.js';
 
 const definition = defineFrnlElement({
   name: 'Button',
@@ -35,7 +35,7 @@ describe('Frnl state-owned visuals and libraries', () => {
     const store = createFrnlStore();
     store.getState().registerEntity('button', { kind: 'primitive', state: 'Idle', properties: {} });
     store.getState().registerElementDefinition('button', definition);
-    store.getState().setVisualOverride('button', 'opacity', 0.25);
+    setFrnlVisualParameter(store, 'button.opacity', 0.25);
     expect(getFrnlVisualParameters(store, 'button')).toMatchObject({ opacity: 0.25, scale: 1 });
     store.getState().setEntityState('button', 'Loading');
     expect(getFrnlVisualParameters(store, 'button')).toEqual({ opacity: 0.5, scale: 0.98 });
