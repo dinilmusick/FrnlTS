@@ -8,7 +8,7 @@ import { createFrnlStore } from '../src/runtime/store.js';
 
 const definition = defineFrnlComponent({
   name: 'button',
-  states: {
+    states: {
     idle: {
       name: 'idle',
       events: { click: { functionId: 'button.idle.click' } },
