@@ -51,7 +51,7 @@ function TestButton({ store }: { store: ReturnType<typeof createFrnlStore> }) {
   });
 
   return (
-    <button data-testid="button" data-state={frnl.state} onClick={() => frnl.events.click(undefined)}>
+    <button data-testid="button" data-state={frnl.state} data-opacity={String(frnl.visualParameters.opacity)} onClick={() => frnl.events.click(undefined)}>
       Click
     </button>
   );
@@ -114,6 +114,7 @@ describe('direct Frnl React components', () => {
     });
 
     expect(screen.getByTestId('button')).toHaveAttribute('data-state', 'idle');
+    expect(screen.getByTestId('button')).toHaveAttribute('data-opacity', '0.25');
     expect(store.getState().componentThemes['button-1']).toBe('Dark');
   });
 
