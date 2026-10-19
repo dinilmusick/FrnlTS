@@ -1,0 +1,29 @@
+{
+  "name": "@dinilmusick/frnlts-cli",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "bin": {
+    "frnl": "./dist/bin/frnl.js"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts src/bin/frnl.ts --format esm --dts --clean",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dinilmusick/frnlts": "workspace:*",
+    "@dinilmusick/frnlts-validate": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.1.0"
+  }
+}
