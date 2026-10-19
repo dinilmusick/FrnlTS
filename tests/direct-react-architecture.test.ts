@@ -27,7 +27,7 @@ describe('direct React component architecture', () => {
     expect(typeof RootExports.defineFrnlComponent).toBe('function');
     expect(typeof RuntimeExports.defineFrnlComponent).toBe('function');
     expect(ReactExports.useFrnlComponent).toBeDefined();
-    expect(ReactExports.FrnlSlot).toBeDefined();
+    expect('FrnlSlot' in ReactExports).toBe(false);
     expect('FrnlPrimitive' in ReactExports).toBe(false);
     expect('FrnlComposite' in ReactExports).toBe(false);
     expect('FrnlPrimitive' in RuntimeExports).toBe(false);
