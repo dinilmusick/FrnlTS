@@ -4,7 +4,7 @@ import { createFrnlFacade, createFrnlStore, getFrnlVisualParameters } from '../s
 
 const testDefinition = defineFrnlComponent({
   name: 'Button',
-  states: {
+    states: {
     Idle: {
       name: 'Idle',
       visualParameters: { opacity: 1 },
@@ -38,8 +38,8 @@ describe('Frnl facade', () => {
 
   it('applies a theme through the component handle and aggregates the same operation across components', () => {
     const store = createFrnlStore();
-    store.getState().registerEntity('btn-1', { , state: 'Idle', properties: {} });
-    store.getState().registerEntity('btn-2', { , state: 'Idle', properties: {} });
+    store.getState().registerEntity('btn-1', { state: 'Idle', properties: {} });
+    store.getState().registerEntity('btn-2', { state: 'Idle', properties: {} });
     store.getState().registerComponentDefinition('btn-1', testDefinition);
     store.getState().registerComponentDefinition('btn-2', testDefinition);
 
@@ -70,7 +70,7 @@ describe('Frnl facade', () => {
     const store = createFrnlStore();
     const badgeDefinition = defineFrnlComponent({
       name: 'Badge',
-  states: {
+    states: {
         Default: {
           name: 'Default',
           visualParameters: { background: 'white', size: 12 },
@@ -84,9 +84,9 @@ describe('Frnl facade', () => {
       },
     });
 
-    store.getState().registerEntity('btn-1', { , state: 'Idle', properties: {} });
-    store.getState().registerEntity('badge-1', { , state: 'Default', properties: {} });
-    store.getState().registerEntity('card-1', { , state: 'Idle', properties: {} });
+    store.getState().registerEntity('btn-1', { state: 'Idle', properties: {} });
+    store.getState().registerEntity('badge-1', { state: 'Default', properties: {} });
+    store.getState().registerEntity('card-1', { state: 'Idle', properties: {} });
 
     store.getState().registerComponentDefinition('btn-1', testDefinition);
     store.getState().registerComponentDefinition('badge-1', badgeDefinition);
@@ -121,7 +121,7 @@ describe('Frnl facade', () => {
 
   it('provides component handles, event triggers, and scoped visual parameter mutation', () => {
     const store = createFrnlStore();
-    store.getState().registerEntity('btn-1', { , state: 'Idle', properties: {} });
+    store.getState().registerEntity('btn-1', { state: 'Idle', properties: {} });
     store.getState().registerComponentDefinition('btn-1', testDefinition);
     store.getState().registerEventHandlers('btn-1', {
       'Button.Idle.click': (_payload, context) => {
