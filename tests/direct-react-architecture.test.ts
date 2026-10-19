@@ -47,6 +47,7 @@ describe('direct React component architecture', () => {
     expect('bounds' in RuntimeExports).toBe(false);
     expect('slotStateSchema' in RuntimeExports).toBe(false);
     expect('slotCollectionSchema' in RuntimeExports).toBe(false);
+    expect('visualAssetSchema' in RuntimeExports).toBe(false);
 
     for (const path of [
       '../src/react/FrnlSlot.tsx',
@@ -66,5 +67,6 @@ describe('direct React component architecture', () => {
     expect('bounds' in parsed).toBe(false);
     expect('slots' in parsed).toBe(false);
     expect('children' in parsed).toBe(false);
+    expect('assets' in parsed).toBe(false);
   });
 });
