@@ -105,85 +105,47 @@ pnpm add @dinilmusick/frnlts zustand zod
 
 ### 1. Direct Frnl React Components
 
-```typescript
-import { createFrnlStore } from '@dinilmusick/frnlts';
+A Frnl component is the React component itself. FrnlTS does not wrap a React component in a semantic class, primitive, composite, renderer, or executor.
 
-const store = createFrnlStore();
+Use `useFrnlComponent()` inside the concrete React component. The hook attaches the component instance to the Zustand-backed Frnl store and exposes its addressable Frnl events.
 
-// Register a UI Primitive
-store.getState().registerEntity('submit-button', {
-  kind: 'primitive',
-  state: 'default',
-  properties: { label: 'Submit', variant: 'primary' },
-});
-
-// Register a UI Composite with a live Slot
-store.getState().registerEntity('login-form', {
-  kind: 'composite',
-  state: 'idle',
-  properties: {},
-});
-
-store.getState().registerSlot('login-form.submit', {
-  id: 'login-form.submit',
-  address: 'login-form.submit',
-  occupantId: 'submit-button',
-  occupantKind: 'primitive',
-  properties: { scale: 1 },
-});
-
-// Listen to validated events
-store.getState().setEntityState('submit-button', 'loading');
-// Emits entity.stateChanged AND slot.stateChanged on login-form.submit!
+```text
+React component
+    │
+    ├── normal React props/events
+    ├── Frnl state
+    ├── Frnl visual definitions
+    └── Frnl events
+            │
+            ▼
+       Zustand store
 ```
 
 ### 2. Addressable Frnl Events
 
-```tsx
-import React from 'react';
-import { FrnlPrimitive, FrnlComposite, FrnlSlot } from '@dinilmusick/frnlts/react';
-import { createFrnlStore } from '@dinilmusick/frnlts';
+React events are entry points into the component's Frnl events. The same Frnl event can be invoked from another component, a keyboard binding, or application code:
 
-const store = createFrnlStore();
-
-export function ActionButton({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <FrnlPrimitive
-      id="action-btn"
-      as="button"
-      store={store}
-      state="default"
-      properties={{ label }}
-      hostProps={{ onClick, type: 'button' }}
-    >
-      {label}
-    </FrnlPrimitive>
-  );
-}
-
-export function Shell({ content }: { content: React.ReactNode }) {
-  return (
-    <FrnlComposite
-      id="app-shell"
-      store={store}
-      slots={
-        <FrnlSlot
-          id="main-slot"
-          address="Shell.main"
-          occupantId="view"
-          occupantKind="primitive"
-          store={store}
-          occupants={{
-            view: content,
-          }}
-        />
-      }
-    />
-  );
-}
+```typescript
+getFrnlEvent(store, 'action-button', 'click')(payload);
 ```
 
----
+Resolution is state-dependent:
+
+```text
+React event / keyboard / application code
+                 ↓
+        component → Frnl event
+                 ↓
+          current Frnl state
+                 ↓
+          state.events[event]
+                 ↓
+          functionId → handler
+```
+
+### 3. Slots
+
+`FrnlSlot` is itself a React component backed by the Frnl store. It provides stable addressable positions and live occupant replacement without wrapping the occupant component.
 
 ## Package Exports
 
