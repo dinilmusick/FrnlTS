@@ -46,6 +46,8 @@ export interface FrnlState {
   elementDefinitions: Record<string, FrnlElementDefinition>;
   eventHandlers: Record<string, Record<string, (payload: unknown) => unknown>>;
   componentParents: Record<string, string | undefined>;
+  visualOverrides: Record<string, Record<string, unknown>>;
+  libraries: Record<string, unknown>;
   setEntityState: (entityId: string, state: string) => void;
   setEntityProperty: (entityId: string, key: string, value: unknown) => void;
   setEntityProperties: (entityId: string, properties: Record<string, unknown>) => void;
@@ -65,6 +67,11 @@ export interface FrnlState {
   registerEventHandlers: (componentId: string, handlers: Record<string, (payload: unknown) => unknown>) => void;
   unregisterEventHandlers: (componentId: string) => void;
   registerComponentParent: (componentId: string, parentId?: string) => void;
+  unregisterEntity: (entityId: string) => void;
+  setVisualOverride: (componentId: string, parameter: string, value: unknown) => void;
+  clearVisualOverrides: (componentId: string) => void;
+  registerLibrary: (address: string, library: unknown) => void;
+  unregisterLibrary: (address: string) => void;
 }
 
 export function createFrnlStore(
@@ -82,6 +89,8 @@ export function createFrnlStore(
     elementDefinitions: {},
     eventHandlers: {},
     componentParents: {},
+    visualOverrides: {},
+    libraries: {},
 
     registerElementDefinition: (componentId, definition) => {
       const id = entityIdSchema.parse(componentId);
@@ -99,6 +108,57 @@ export function createFrnlStore(
         const next = { ...current.eventHandlers };
         delete next[id];
         return { eventHandlers: next };
+      });
+    },
+
+    unregisterEntity: (entityId) => {
+      const id = entityIdSchema.parse(entityId);
+      set((current) => {
+        const entities = { ...current.entities };
+        const elementDefinitions = { ...current.elementDefinitions };
+        const eventHandlers = { ...current.eventHandlers };
+        const componentParents = { ...current.componentParents };
+        const visualOverrides = { ...current.visualOverrides };
+        delete entities[id];
+        delete elementDefinitions[id];
+        delete eventHandlers[id];
+        delete componentParents[id];
+        delete visualOverrides[id];
+        return { entities, elementDefinitions, eventHandlers, componentParents, visualOverrides };
+      });
+    },
+
+    setVisualOverride: (componentId, parameter, value) => {
+      const id = entityIdSchema.parse(componentId);
+      const key = propertyKeySchema.parse(parameter);
+      set((current) => ({
+        visualOverrides: {
+          ...current.visualOverrides,
+          [id]: { ...(current.visualOverrides[id] ?? {}), [key]: value },
+        },
+      }));
+    },
+
+    clearVisualOverrides: (componentId) => {
+      const id = entityIdSchema.parse(componentId);
+      set((current) => {
+        const visualOverrides = { ...current.visualOverrides };
+        delete visualOverrides[id];
+        return { visualOverrides };
+      });
+    },
+
+    registerLibrary: (address, library) => {
+      const key = z.string().min(1).parse(address);
+      set((current) => ({ libraries: { ...current.libraries, [key]: library } }));
+    },
+
+    unregisterLibrary: (address) => {
+      const key = z.string().min(1).parse(address);
+      set((current) => {
+        const libraries = { ...current.libraries };
+        delete libraries[key];
+        return { libraries };
       });
     },
 
@@ -284,8 +344,11 @@ export function createFrnlStore(
           }
         }
 
+        const visualOverrides = { ...current.visualOverrides };
+        delete visualOverrides[id];
         return {
           entities: { ...current.entities, [id]: { ...entity, state: nextState } },
+          visualOverrides,
           events: [...current.events, ...newEvents],
         };
       });
