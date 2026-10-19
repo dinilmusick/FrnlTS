@@ -199,7 +199,7 @@ export function createFrnlStore(
      *
      * Semantic Authority Model:
      * - Declarative Metadata (authoritative from registration / props):
-     *   `properties`, `assets`.
+     *   `properties`.
      * - Runtime State (authoritative from runtime / interactions):
      *   `state` (active state is preserved across re-registrations),
      *   `events` (event history is preserved).
@@ -215,7 +215,6 @@ export function createFrnlStore(
               state: existing.state,
               // Declarative metadata is merged / updated
               properties: { ...existing.properties, ...validated.properties },
-              assets: validated.assets ?? existing.assets,
             }
           : validated;
         return {
