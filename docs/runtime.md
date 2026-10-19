@@ -13,7 +13,7 @@ FrnlTS is the semantic frontend runtime layer for Krusbl. React is the concrete 
 - **Dependencies** — dependency graph validation and topology.
 - **Routing** — typed route matching and URL construction.
 - **Accessibility Contracts** — machine-checkable semantic accessibility rules.
-- **Semantic Store** — Zustand-backed component state, slots, collections, events, themes, and flows.
+- **Semantic Store** — Zustand-backed component state, semantic parent relationships, events, themes, and flows.
 
 ## Architecture
 
@@ -21,13 +21,12 @@ FrnlTS is the semantic frontend runtime layer for Krusbl. React is the concrete 
 Ordinary React components
         │
         ├── useFrnlComponent
-        ├── FrnlSlot
         └── normal React composition
                 │
                 ▼
         Frnl semantic runtime
         ├── state / events / themes
-        ├── slots / flows
+        ├── flows
         ├── lifecycle / resources
         ├── contracts / capabilities
         ├── dependencies / registry
