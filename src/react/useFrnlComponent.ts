@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
-import type { FrnlElementDefinition } from '../elements/definition.js';
+import type { FrnlComponentDefinition } from '../runtime/component-definition.js';
 import type { FrnlState } from '../runtime/store.js';
 import { getFrnlComponentHandle, getFrnlEvent, getFrnlVisualParameters, type FrnlEventHandler, type FrnlEventContext } from '../runtime/events.js';
 
@@ -10,7 +10,7 @@ const EMPTY_PROPERTIES: Record<string, unknown> = Object.freeze({});
 export interface UseFrnlComponentOptions {
   id: string;
   parentId?: string;
-  definition: FrnlElementDefinition;
+  definition: FrnlComponentDefinition;
   store: StoreApi<FrnlState>;
   state?: string;
   properties?: Record<string, unknown>;
