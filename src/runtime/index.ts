@@ -6,3 +6,4 @@ export * from './accessibility.js';
 export * from './dependencies.js';
 export * from './store.js';
 export * from './validation.js';
+export * from './events.js';
