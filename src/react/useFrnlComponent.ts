@@ -103,6 +103,7 @@ export function useFrnlComponent({
       ...(visualOverrides ?? {}),
     },
     events,
+    applyTheme: (themeName: string) => getFrnlComponentHandle(store, id).applyTheme(themeName),
   };
 }
 
