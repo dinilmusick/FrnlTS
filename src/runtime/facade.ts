@@ -1,6 +1,6 @@
 import type { StoreApi } from 'zustand/vanilla';
 import type { FrnlState } from './store.js';
-import { getFrnlComponentHandle, getFrnlEvent, type FrnlComponentHandle, type FrnlEventHandler } from './events.js';
+import { getFrnlComponentHandle, getFrnlEvent, setFrnlVisualParameter, type FrnlComponentHandle, type FrnlEventHandler } from './events.js';
 import { getFrnlLibrary } from './libraries.js';
 
 export class FrnlFacade {
@@ -16,6 +16,10 @@ export class FrnlFacade {
 
   library<T = unknown>(address: string): T {
     return getFrnlLibrary<T>(this.store, address);
+  }
+
+  setVisualParameter(address: string, value: unknown): void {
+    setFrnlVisualParameter(this.store, address, value);
   }
 }
 
