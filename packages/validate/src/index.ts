@@ -4,10 +4,12 @@ import { checkComponentRules } from './rules/componentRules.js';
 import { checkFileLimits, checkImportRules } from './rules/fileLimits.js';
 import { checkComponentScaffolds, collectWorkspaceFiles } from './workspaceRules.js';
 import { checkScopedLibraryRules } from './rules/scopedLibraryRules.js';
+import { checkOrchestrationRules } from './rules/orchestrationRules.js';
 import type { FrnlValidationDiagnostic, FrnlValidationResult, FrnlPromotableAsset } from './types.js';
 
 export type { FrnlValidationDiagnostic, FrnlValidationResult, FrnlPromotableAsset } from './types.js';
 export { FRNL_COMPONENT_MAX_LINES, FRNL_EVENT_MAX_SUBSTANTIVE_LINES } from './rules/fileLimits.js';
+export { FRNL_ORCHESTRATION_MAX_LINES } from './rules/orchestrationRules.js';
 
 export function validateFrnlWorkspace(root: string = process.cwd()): FrnlValidationResult {
   const errors: FrnlValidationDiagnostic[] = [];
@@ -20,6 +22,7 @@ export function validateFrnlWorkspace(root: string = process.cwd()): FrnlValidat
       ...checkComponentRules(filePath, source),
       ...checkFileLimits(filePath, source),
       ...checkImportRules(filePath, source),
+      ...checkOrchestrationRules(filePath, source),
     ]) {
       (diagnostic.severity === 'error' ? errors : warnings).push(diagnostic);
     }
