@@ -2,6 +2,7 @@ import type { StoreApi } from 'zustand/vanilla';
 import type { FrnlState } from './store.js';
 import { getFrnlComponentHandle, getFrnlEvent, setFrnlVisualParameter, type FrnlComponentHandle, type FrnlEventHandler, type FrnlEventTrigger } from './events.js';
 import { getFrnlLibrary } from './libraries.js';
+import { applyFrnlTheme, registerFrnlTheme, type FrnlThemeDefinition } from './themes.js';
 
 export class FrnlFacade {
   constructor(readonly store: StoreApi<FrnlState>) {}
@@ -20,6 +21,16 @@ export class FrnlFacade {
 
   setVisualParameter(address: string, value: unknown): void {
     setFrnlVisualParameter(this.store, address, value);
+  }
+
+  registerTheme(name: string, theme: FrnlThemeDefinition): void {
+    registerFrnlTheme(this.store, name, theme);
+  }
+
+  applyThemeToAllComponents(themeName: string): void {
+    for (const componentId of Object.keys(this.store.getState().entities)) {
+      applyFrnlTheme(this.store, componentId, themeName);
+    }
   }
 }
 
