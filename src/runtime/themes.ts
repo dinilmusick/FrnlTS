@@ -1,4 +1,4 @@
-import type { FrnlElementDefinition } from '../elements/definition.js';
+import type { FrnlComponentDefinition } from './component-definition.js';
 import type { FrnlState } from './store.js';
 
 export type FrnlThemeState = {
@@ -42,7 +42,7 @@ export function resolveFrnlVisualParameters(
 ): Record<string, unknown> {
   const current = store.getState();
   const entity = current.entities[componentId];
-  const definition = current.elementDefinitions[componentId];
+  const definition = current.componentDefinitions[componentId];
   if (!entity || !definition) return {};
 
   const state = definition.states[entity.state];
@@ -69,7 +69,7 @@ export function getFrnlComponentTheme(
 
 export function validateFrnlThemeAgainstDefinition(
   theme: FrnlThemeDefinition,
-  definition: FrnlElementDefinition,
+  definition: FrnlComponentDefinition,
 ): void {
   for (const [stateName, stateTheme] of Object.entries(theme[definition.name]?.states ?? {})) {
     if (!definition.states[stateName]) {
