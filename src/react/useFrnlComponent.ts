@@ -14,7 +14,6 @@ export interface UseFrnlComponentOptions {
   store: StoreApi<FrnlState>;
   state?: string;
   properties?: Record<string, unknown>;
-  bounds?: { width?: number | string; height?: number | string };
   handlers: Record<string, FrnlEventHandler>;
 }
 
@@ -30,7 +29,7 @@ export function useFrnlComponent({
 }: UseFrnlComponentOptions) {
   const resolvedProperties = properties ?? EMPTY_PROPERTIES;
   const initialState = state ?? Object.keys(definition.states)[0] ?? 'default';
-  const previousProps = useRef({ state: initialState, properties: resolvedProperties, bounds });
+  const previousProps = useRef({ state: initialState, properties: resolvedProperties });
   const handlersRef = useRef(handlers);
   handlersRef.current = handlers;
 
@@ -38,7 +37,6 @@ export function useFrnlComponent({
     store.getState().registerEntity(id, {
       state: initialState,
       properties: resolvedProperties,
-      bounds,
     });
     store.getState().registerComponentDefinition(id, definition);
     store.getState().registerComponentParent(id, parentId);
@@ -58,12 +56,8 @@ export function useFrnlComponent({
       store.getState().setEntityProperties(id, resolvedProperties);
     }
 
-    if (bounds !== previous.bounds) {
-      store.getState().setEntityBounds(id, bounds);
-    }
-
-    previousProps.current = { state: state ?? initialState, properties: resolvedProperties, bounds };
-  }, [id, state, resolvedProperties, bounds, initialState, store]);
+    previousProps.current = { state: state ?? initialState, properties: resolvedProperties };
+  }, [id, state, resolvedProperties, initialState, store]);
 
   const handlerKeys = useMemo(() => Object.keys(handlers).sort().join('\0'), [handlers]);
 
