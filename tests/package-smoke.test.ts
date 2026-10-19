@@ -13,7 +13,7 @@ describe('package distribution smoke test', () => {
     expect(typeof root.defineFrnlComponent).toBe('function');
     expect(typeof root.createFrnlStore).toBe('function');
     expect(typeof react.useFrnlComponent).toBe('function');
-    expect(typeof react.FrnlSlot).toBe('function');
+    expect('FrnlSlot' in react).toBe(false);
     expect(typeof runtime.createFrnlStore).toBe('function');
     expect(typeof runtime.defineFrnlComponent).toBe('function');
     expect(typeof runtime.createFrnlFacade).toBe('function');
