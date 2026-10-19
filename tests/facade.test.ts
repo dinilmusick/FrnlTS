@@ -52,9 +52,13 @@ describe('Frnl facade', () => {
     facade.component('btn-1').applyTheme('Dark');
     expect(getFrnlVisualParameters(store, 'btn-1').opacity).toBe(0.4);
 
+    facade.component('btn-2').setVisualParameter('opacity', 0.1);
+    expect(getFrnlVisualParameters(store, 'btn-2').opacity).toBe(0.1);
+
     facade.applyThemeToAllComponents('Dark');
     expect(getFrnlVisualParameters(store, 'btn-1').opacity).toBe(0.4);
     expect(getFrnlVisualParameters(store, 'btn-2').opacity).toBe(0.4);
+    expect(store.getState().componentThemes).toMatchObject({ 'btn-1': 'Dark', 'btn-2': 'Dark' });
   });
 
   it('provides component handles, event triggers, and scoped visual parameter mutation', () => {
