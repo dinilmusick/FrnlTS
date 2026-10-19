@@ -102,6 +102,21 @@ describe('direct Frnl React components', () => {
     expect(store.getState().entities['button-1']?.state).toBe('loading');
   });
 
+  it('rerenders when a component theme is applied and resolves themed visual parameters', () => {
+    const store = createFrnlStore();
+    render(<TestButton store={store} />);
+
+    act(() => {
+      store.getState().registerTheme('Dark', {
+        button: { states: { idle: { visualParameters: { opacity: 0.25 } } } },
+      });
+      store.getState().applyTheme('button-1', 'Dark');
+    });
+
+    expect(screen.getByTestId('button')).toHaveAttribute('data-state', 'idle');
+    expect(store.getState().componentThemes['button-1']).toBe('Dark');
+  });
+
   it('cleans up runtime entity, definition, handlers, and visual overrides on unmount', () => {
     const store = createFrnlStore();
     const { unmount } = render(<TestButton store={store} />);
@@ -122,5 +137,6 @@ describe('direct Frnl React components', () => {
     expect(store.getState().eventHandlers['button-1']).toBeUndefined();
     expect(store.getState().visualOverrides['button-1']).toBeUndefined();
     expect(store.getState().componentParents['button-1']).toBeUndefined();
+    expect(store.getState().componentThemes['button-1']).toBeUndefined();
   });
 });
