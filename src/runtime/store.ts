@@ -29,7 +29,6 @@ import {
 import { validateFrnlThemeAgainstDefinition, type FrnlThemeDefinition } from './themes.js';
 
 export type {
-  EntityKind,
   EntityState,
   SlotState,
   SlotCollectionState,
@@ -110,13 +109,13 @@ export function createFrnlStore(
       for (const theme of Object.values(get().themes)) {
         validateFrnlThemeAgainstDefinition(theme, definition);
       }
-      set((current) => ({ elementDefinitions: { ...current.componentDefinitions, [id]: definition } }));
+      set((current) => ({ componentDefinitions: { ...current.componentDefinitions, [id]: definition } }));
     },
 
     registerTheme: (name, theme) => {
       const themeName = z.string().min(1).parse(name);
       const validatedTheme = frnlThemeDefinitionSchema.parse(theme) as FrnlThemeDefinition;
-      for (const definition of Object.values(get().elementDefinitions)) {
+      for (const definition of Object.values(get().componentDefinitions)) {
         validateFrnlThemeAgainstDefinition(validatedTheme, definition);
       }
       set((current) => ({
@@ -229,7 +228,7 @@ export function createFrnlStore(
      *
      * Semantic Authority Model:
      * - Declarative Metadata (authoritative from registration / props):
-     *   `kind`, `properties`, `bounds`, `assets`.
+     *   `properties`, `bounds`, `assets`.
      * - Runtime State (authoritative from runtime / interactions):
      *   `state` (active state is preserved across re-registrations),
      *   `events` (event history is preserved).
@@ -241,7 +240,6 @@ export function createFrnlStore(
         const existing = current.entities[id];
         const nextEntity: EntityState = existing
           ? {
-              kind: validated.kind,
               // Runtime state is preserved if already set
               state: existing.state,
               // Declarative metadata is merged / updated
@@ -272,7 +270,6 @@ export function createFrnlStore(
           ? {
               ...validated,
               occupantId: existing.occupantId,
-              occupantKind: existing.occupantKind,
               properties: { ...existing.properties, ...validated.properties },
             }
           : validated;
@@ -549,9 +546,9 @@ export function createFrnlStore(
       });
     },
 
-    triggerFlow: (flowId, compositeId, trigger, payload) => {
+    triggerFlow: (flowId, componentId, trigger, payload) => {
       const fId = z.string().min(1).parse(flowId);
-      const cId = entityIdSchema.parse(compositeId);
+      const cId = entityIdSchema.parse(componentId);
       const trig = z.string().min(1).parse(trigger);
       const eventPayload = flowTriggeredPayloadSchema.parse({
         flowId: fId,
