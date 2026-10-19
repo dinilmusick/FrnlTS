@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { checkComponentRules } from './rules/componentRules.js';
 import { checkFileLimits, checkImportRules } from './rules/fileLimits.js';
-import { checkComponentScaffolds, collectWorkspaceFiles } from './workspaceRules.js';
+import { checkComponentScaffolds, checkFrnlPageArchitecture, collectWorkspaceFiles } from './workspaceRules.js';
 import { checkScopedLibraryRules } from './rules/scopedLibraryRules.js';
 import { checkOrchestrationRules } from './rules/orchestrationRules.js';
 import type { FrnlValidationDiagnostic, FrnlValidationResult, FrnlPromotableAsset } from './types.js';
@@ -33,7 +33,7 @@ export function validateFrnlWorkspace(root: string = process.cwd()): FrnlValidat
     }
     promotableAssets.push(...scoped.promotableAssets);
   }
-  for (const diagnostic of checkComponentScaffolds(root)) {
+  for (const diagnostic of [...checkComponentScaffolds(root), ...checkFrnlPageArchitecture(root)]) {
     (diagnostic.severity === 'error' ? errors : warnings).push(diagnostic);
   }
   return { errors, warnings, filesChecked: collectWorkspaceFiles(root).length, passed: errors.length === 0, promotableAssets };
