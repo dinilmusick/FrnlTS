@@ -1,0 +1,102 @@
+import { afterEach, describe, expect, it } from 'vitest';
+import React from 'react';
+import { act, cleanup, render, screen } from '@testing-library/react';
+import { defineFrnlElement } from '../src/elements/definition.js';
+import { getFrnlEvent } from '../src/runtime/events.js';
+import { createFrnlStore } from '../src/runtime/store.js';
+import { useFrnlComponent } from '../src/react/useFrnlComponent.js';
+
+afterEach(cleanup);
+
+const buttonDefinition = defineFrnlElement({
+  name: 'button',
+  kind: 'primitive',
+  states: {
+    idle: {
+      name: 'idle',
+      events: { click: { functionId: 'button.idle.click' } },
+      phases: {
+        attackPhase: { visualDefinition: { parameters: {} } },
+        sustainPhase: { visualDefinition: { parameters: {} } },
+        releasePhase: { visualDefinition: { parameters: {} } },
+      },
+    },
+    loading: {
+      name: 'loading',
+      events: { click: { functionId: 'button.loading.click' } },
+      phases: {
+        attackPhase: { visualDefinition: { parameters: {} } },
+        sustainPhase: { visualDefinition: { parameters: {} } },
+        releasePhase: { visualDefinition: { parameters: {} } },
+      },
+    },
+  },
+});
+
+function TestButton({ store }: { store: ReturnType<typeof createFrnlStore> }) {
+  const frnl = useFrnlComponent({
+    id: 'button-1',
+    definition: buttonDefinition,
+    store,
+    state: 'idle',
+    handlers: {
+      'button.idle.click': () => {
+        store.getState().setEntityState('button-1', 'loading');
+        return 'idle-clicked';
+      },
+      'button.loading.click': () => 'loading-clicked',
+    },
+  });
+
+  return (
+    <button data-testid="button" data-state={frnl.state} onClick={() => frnl.events.click(undefined)}>
+      Click
+    </button>
+  );
+}
+
+describe('direct Frnl React components', () => {
+  it('attaches Frnl state and addressable events directly to the React component', () => {
+    const store = createFrnlStore();
+    render(<TestButton store={store} />);
+
+    expect(screen.getByTestId('button')).toHaveAttribute('data-state', 'idle');
+    expect(store.getState().entities['button-1']?.kind).toBe('primitive');
+
+    act(() => {
+      screen.getByTestId('button').click();
+    });
+
+    expect(store.getState().entities['button-1']?.state).toBe('loading');
+  });
+
+  it('resolves the same component event against the current Frnl state', () => {
+    const store = createFrnlStore();
+    render(<TestButton store={store} />);
+
+    act(() => {
+      getFrnlEvent(store, 'button-1', 'click')(undefined);
+    });
+    expect(store.getState().entities['button-1']?.state).toBe('loading');
+
+    let result: unknown;
+    act(() => {
+      result = getFrnlEvent(store, 'button-1', 'click')(undefined);
+    });
+    expect(result).toBe('loading-clicked');
+  });
+
+  it('allows another UI element or application code to trigger the same Frnl event without knowing its implementation', () => {
+    const store = createFrnlStore();
+    render(<TestButton store={store} />);
+
+    const click = getFrnlEvent(store, 'button-1', 'click');
+
+    expect(typeof click).toBe('function');
+    act(() => {
+      click(undefined);
+    });
+
+    expect(store.getState().entities['button-1']?.state).toBe('loading');
+  });
+});
