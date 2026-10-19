@@ -104,13 +104,13 @@ export function getFrnlComponentHandle<TDefinition extends FrnlElementDefinition
   store: StoreApi<FrnlState>,
   componentId: string,
 ): FrnlComponentHandle<TDefinition> {
-  const address: FrnlComponentAddress = {
-    componentId,
-    path: resolveComponentPath(store, componentId),
-  };
-
   return {
-    address,
+    get address() {
+      return {
+        componentId,
+        path: resolveComponentPath(store, componentId),
+      };
+    },
     event: (eventName) => getFrnlEvent(store, componentId, eventName),
   };
 }
