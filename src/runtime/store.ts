@@ -125,12 +125,14 @@ export function createFrnlStore(
         const eventHandlers = { ...current.eventHandlers };
         const componentParents = { ...current.componentParents };
         const visualOverrides = { ...current.visualOverrides };
+        const componentThemes = { ...current.componentThemes };
         delete entities[id];
         delete elementDefinitions[id];
         delete eventHandlers[id];
         delete componentParents[id];
         delete visualOverrides[id];
-        return { entities, elementDefinitions, eventHandlers, componentParents, visualOverrides };
+        delete componentThemes[id];
+        return { entities, elementDefinitions, eventHandlers, componentParents, visualOverrides, componentThemes };
       });
     },
 
