@@ -11,3 +11,4 @@ export * from './libraries.js';
 export * from './facade.js';
 export * from './themes.js';
 export * from './component-definition.js';
+export * from './orchestration.js';
