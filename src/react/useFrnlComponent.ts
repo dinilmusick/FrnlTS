@@ -24,7 +24,6 @@ export function useFrnlComponent({
   store,
   state,
   properties,
-  bounds,
   handlers,
 }: UseFrnlComponentOptions) {
   const resolvedProperties = properties ?? EMPTY_PROPERTIES;
