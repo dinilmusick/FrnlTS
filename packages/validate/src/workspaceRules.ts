@@ -45,6 +45,81 @@ export function checkComponentScaffolds(root: string): FrnlValidationDiagnostic[
   return diagnostics;
 }
 
+export function checkFrnlPageArchitecture(root: string): FrnlValidationDiagnostic[] {
+  const diagnostics: FrnlValidationDiagnostic[] = [];
+  const frontend = path.join(root, 'src', 'frontend');
+  if (!fs.existsSync(frontend) || !fs.statSync(frontend).isDirectory()) return diagnostics;
+
+  for (const forbidden of ['frontend-state', 'layouts', 'layout']) {
+    const candidate = path.join(frontend, forbidden);
+    if (fs.existsSync(candidate)) {
+      diagnostics.push({
+        ruleId: 'frnl/frontend-boundary',
+        filePath: candidate,
+        message: `Frnl frontend cannot contain '${forbidden}/'; use only pages/ and components/ at the frontend root.`,
+        severity: 'error',
+      });
+    }
+  }
+
+  for (const entry of fs.readdirSync(frontend, { withFileTypes: true })) {
+    if (entry.isDirectory() && !['pages', 'components'].includes(entry.name)) {
+      diagnostics.push({
+        ruleId: 'frnl/frontend-boundary',
+        filePath: path.join(frontend, entry.name),
+        message: 'Frnl frontend may contain only pages/ and components/ directories.',
+        severity: 'error',
+      });
+    }
+  }
+
+  const pages = path.join(frontend, 'pages');
+  if (!fs.existsSync(pages)) return diagnostics;
+  for (const pageEntry of fs.readdirSync(pages, { withFileTypes: true })) {
+    if (!pageEntry.isDirectory() || pageEntry.name.startsWith('.')) continue;
+    const pageDir = path.join(pages, pageEntry.name);
+    const pageFile = path.join(pageDir, 'page.tsx');
+    if (!fs.existsSync(pageFile)) {
+      diagnostics.push({
+        ruleId: 'frnl/page-entry-required',
+        filePath: pageDir,
+        message: 'Every route-scoped Frnl page directory must contain page.tsx.',
+        severity: 'error',
+      });
+      continue;
+    }
+
+    const pageSource = fs.readFileSync(pageFile, 'utf8');
+    if (!/components[\\/]components(?:\.js)?['"]/.test(pageSource)) {
+      diagnostics.push({
+        ruleId: 'frnl/page-component-facade',
+        filePath: pageFile,
+        message: 'Pages must import UI through components/components.ts.',
+        severity: 'error',
+      });
+    }
+
+    const orchestrationDir = path.join(pageDir, 'orchestrations');
+    if (fs.existsSync(orchestrationDir)) {
+      for (const orchestration of fs.readdirSync(orchestrationDir, { withFileTypes: true })) {
+        if (!orchestration.isFile() || !orchestration.name.endsWith('.ts')) continue;
+        const filePath = path.join(orchestrationDir, orchestration.name);
+        const source = fs.readFileSync(filePath, 'utf8');
+        if (!source.includes('defineFrnlOrchestration(')) {
+          diagnostics.push({
+            ruleId: 'frnl/orchestration-definition-required',
+            filePath,
+            message: 'Page orchestration files must define a Frnl orchestration.',
+            severity: 'error',
+          });
+        }
+      }
+    }
+  }
+
+  return diagnostics;
+}
+
 export function collectWorkspaceFiles(root: string): string[] {
   return files(root);
 }
