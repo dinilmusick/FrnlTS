@@ -638,8 +638,7 @@ describe('FrnlTS Frontend Runtime Suite', () => {
       const store = createFrnlStore();
 
       store.getState().registerEntity('btn-primary', {
-        kind: 'primitive',
-        state: 'idle',
+                state: 'idle',
         properties: { label: 'Submit' },
       });
 
@@ -671,8 +670,7 @@ describe('FrnlTS Frontend Runtime Suite', () => {
 
       store.getState().replaceSlotOccupant('main-slot', {
         id: 'card-view',
-        kind: 'composite',
-      });
+              });
 
       expect(store.getState().slots['main-slot'].occupantId).toBe('card-view');
 
