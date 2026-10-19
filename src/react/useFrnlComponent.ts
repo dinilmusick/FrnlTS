@@ -5,6 +5,8 @@ import type { FrnlElementDefinition } from '../elements/definition.js';
 import type { FrnlState } from '../runtime/store.js';
 import { getFrnlComponentHandle, getFrnlEvent } from '../runtime/events.js';
 
+const EMPTY_PROPERTIES: Record<string, unknown> = Object.freeze({});
+
 export interface UseFrnlComponentOptions {
   id: string;
   parentId?: string;
@@ -22,12 +24,13 @@ export function useFrnlComponent({
   definition,
   store,
   state,
-  properties = {},
+  properties,
   bounds,
   handlers,
 }: UseFrnlComponentOptions) {
+  const resolvedProperties = properties ?? EMPTY_PROPERTIES;
   const initialState = state ?? Object.keys(definition.states)[0] ?? 'default';
-  const previousProps = useRef({ state: initialState, properties, bounds });
+  const previousProps = useRef({ state: initialState, properties: resolvedProperties, bounds });
   const handlersRef = useRef(handlers);
   handlersRef.current = handlers;
 
@@ -35,7 +38,7 @@ export function useFrnlComponent({
     store.getState().registerEntity(id, {
       kind: definition.kind,
       state: initialState,
-      properties,
+      properties: resolvedProperties,
       bounds,
     });
     store.getState().registerElementDefinition(id, definition);
@@ -51,16 +54,16 @@ export function useFrnlComponent({
       store.getState().setEntityState(id, state);
     }
 
-    if (properties !== previous.properties) {
-      store.getState().setEntityProperties(id, properties);
+    if (resolvedProperties !== previous.properties) {
+      store.getState().setEntityProperties(id, resolvedProperties);
     }
 
     if (bounds !== previous.bounds) {
       store.getState().setEntityBounds(id, bounds);
     }
 
-    previousProps.current = { state: state ?? initialState, properties, bounds };
-  }, [id, state, properties, bounds, initialState, store]);
+    previousProps.current = { state: state ?? initialState, properties: resolvedProperties, bounds };
+  }, [id, state, resolvedProperties, bounds, initialState, store]);
 
   const handlerKeys = useMemo(() => Object.keys(handlers).sort().join('\0'), [handlers]);
 
@@ -90,7 +93,7 @@ export function useFrnlComponent({
 
   return {
     state: entity?.state ?? initialState,
-    properties: entity?.properties ?? properties,
+    properties: entity?.properties ?? resolvedProperties,
     events,
   };
 }
