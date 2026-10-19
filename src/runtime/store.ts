@@ -66,7 +66,7 @@ export interface FrnlState {
   setSlotCollection: (collectionId: string, slotIds: string[]) => void;
   addSlotToCollection: (collectionId: string, slotId: string) => void;
   removeSlotFromCollection: (collectionId: string, slotId: string) => void;
-  triggerFlow: (flowId: string, compositeId: string, trigger: string, payload?: unknown) => void;
+  triggerFlow: (flowId: string, componentId: string, trigger: string, payload?: unknown) => void;
   emit: (event: FrnlEvent) => void;
   registerComponentDefinition: (componentId: string, definition: FrnlComponentDefinition) => void;
   registerTheme: (name: string, theme: FrnlThemeDefinition) => void;
