@@ -27,11 +27,6 @@ export const frnlThemeDefinitionSchema = z.record(
   frnlThemeComponentSchema,
 );
 
-export const boundsSchema = z.object({
-  width: z.union([z.string(), z.number()]).optional(),
-  height: z.union([z.string(), z.number()]).optional(),
-}).optional();
-
 export const visualAssetSchema = z.object({
   id: z.string().min(1),
   type: z.string().min(1),
@@ -42,25 +37,7 @@ export const visualAssetSchema = z.object({
 export const entityStateSchema = z.object({
   state: stateNameSchema,
   properties: propertiesSchema,
-  bounds: boundsSchema.optional(),
   assets: z.array(visualAssetSchema).optional(),
-});
-
-export const occupantSchema = z.object({
-  id: entityIdSchema,
-});
-
-export const slotStateSchema = z.object({
-  id: entityIdSchema,
-  address: z.string().min(1),
-  occupantId: entityIdSchema.nullable(),
-  properties: propertiesSchema,
-});
-
-export const slotCollectionSchema = z.object({
-  id: entityIdSchema,
-  address: z.string().min(1),
-  slotIds: z.array(entityIdSchema),
 });
 
 export const entityStateChangedPayloadSchema = z.object({
@@ -75,34 +52,6 @@ export const entityPropertyChangedPayloadSchema = z.object({
   value: propertyValueSchema,
 });
 
-export const slotPropertyChangedPayloadSchema = z.object({
-  slotId: entityIdSchema,
-  key: propertyKeySchema,
-  value: propertyValueSchema,
-});
-
-export const slotOccupantChangedPayloadSchema = z.object({
-  slotId: entityIdSchema,
-  address: z.string().min(1),
-  previousOccupant: occupantSchema.nullable(),
-  occupant: occupantSchema.nullable(),
-});
-
-export const slotStateChangedPayloadSchema = z.object({
-  slotId: entityIdSchema,
-  address: z.string().min(1),
-  occupantId: entityIdSchema,
-  previousState: stateNameSchema,
-  state: stateNameSchema,
-});
-
-export const slotCollectionChangedPayloadSchema = z.object({
-  collectionId: entityIdSchema,
-  address: z.string().min(1),
-  slotIds: z.array(entityIdSchema),
-  action: z.enum(['set', 'add', 'remove']),
-});
-
 export const flowTriggeredPayloadSchema = z.object({
   flowId: z.string().min(1),
   componentId: entityIdSchema,
@@ -113,18 +62,10 @@ export const flowTriggeredPayloadSchema = z.object({
 export const frnlEventSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('entity.stateChanged'), payload: entityStateChangedPayloadSchema }),
   z.object({ type: z.literal('entity.propertyChanged'), payload: entityPropertyChangedPayloadSchema }),
-  z.object({ type: z.literal('slot.propertyChanged'), payload: slotPropertyChangedPayloadSchema }),
-  z.object({ type: z.literal('slot.occupantChanged'), payload: slotOccupantChangedPayloadSchema }),
-  z.object({ type: z.literal('slot.stateChanged'), payload: slotStateChangedPayloadSchema }),
-  z.object({ type: z.literal('slot.collectionChanged'), payload: slotCollectionChangedPayloadSchema }),
   z.object({ type: z.literal('flow.triggered'), payload: flowTriggeredPayloadSchema }),
 ]);
 
 export type EntityState = z.infer<typeof entityStateSchema>;
-export type SlotState = z.infer<typeof slotStateSchema>;
-export type SlotCollectionState = z.infer<typeof slotCollectionSchema>;
-export type Occupant = z.infer<typeof occupantSchema>;
-export type Bounds = z.infer<typeof boundsSchema>;
 export type VisualAsset = z.infer<typeof visualAssetSchema>;
 export type FrnlEventPayload = z.infer<typeof frnlEventSchema>;
 export type FrnlEvent = z.infer<typeof frnlEventSchema>;
