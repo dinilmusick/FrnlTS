@@ -163,10 +163,11 @@ export function generateEvent(componentName: string, state: string, event: strin
   const eventsFile = path.join(componentDir, 'events.ts');
   let eventsSource = fs.existsSync(eventsFile) ? fs.readFileSync(eventsFile, 'utf8') : '';
   if (!eventsSource.includes(`./States/${state}/Events/${event}.js`)) {
-    eventsSource = `import { ${state}${event} } from './States/${state}/Events/${event}.js';\\n` + eventsSource;
+    eventsSource = `import { ${state}${event} } from './States/${state}/Events/${event}.js';\n` + eventsSource;
   }
   if (!eventsSource.includes(`'${componentName}.${state}.${event}':`)) {
-    eventsSource += `\nexport const __${state}${event} = '${componentName}.${state}.${event}';\n`;
+    eventsSource = eventsSource.replace(/export const eventHandlers = \\{/,
+      `export const eventHandlers = {\n  '${componentName}.${state}.${event}': ${state}${event},`);
   }
   fs.writeFileSync(eventsFile, eventsSource);
   return eventFile;
