@@ -2,6 +2,7 @@ import type { StoreApi } from 'zustand/vanilla';
 import type { FrnlElementDefinition } from '../elements/definition.js';
 import type { FrnlState } from './store.js';
 import { getFrnlLibrary } from './libraries.js';
+import { applyFrnlTheme, resolveFrnlVisualParameters } from './themes.js';
 
 export type FrnlEventContext = {
   readonly componentId: string;
@@ -32,6 +33,7 @@ export type FrnlComponentHandle<TDefinition extends FrnlElementDefinition = Frnl
   event<TEventName extends EventName<TDefinition>>(eventName: TEventName): FrnlEventTrigger;
   setState(state: string): void;
   setVisualParameter(parameter: string, value: unknown): void;
+  applyTheme(themeName: string): void;
 };
 
 function resolveComponentPath(store: StoreApi<FrnlState>, componentId: string): FrnlComponentPath {
@@ -57,6 +59,7 @@ function createEventContext(store: StoreApi<FrnlState>, componentId: string): Fr
     state: entity.state,
     setState: (state) => current.setEntityState(componentId, state),
     setVisualParameter: (parameter, value) => current.setVisualOverride(componentId, parameter, value),
+    applyTheme: (themeName) => applyFrnlTheme(store, componentId, themeName),
     getLibrary: <T = unknown>(address: string) => getFrnlLibrary<T>(store, address),
   };
 }
@@ -76,7 +79,7 @@ export function getFrnlVisualParameters(store: StoreApi<FrnlState>, componentId:
   if (!entity || !definition) return {};
   const state = definition.states[entity.state];
   if (!state) return {};
-  return { ...state.visualParameters, ...(current.visualOverrides[componentId] ?? {}) };
+  return resolveFrnlVisualParameters(store, componentId);
 }
 
 export function invokeFrnlEvent<TPayload = unknown, TResult = unknown>(
@@ -110,6 +113,7 @@ export function getFrnlComponentHandle<TDefinition extends FrnlElementDefinition
     event: (eventName) => getFrnlEvent(store, componentId, eventName),
     setState: (state) => store.getState().setEntityState(componentId, state),
     setVisualParameter: (parameter, value) => store.getState().setVisualOverride(componentId, parameter, value),
+    applyTheme: (themeName) => applyFrnlTheme(store, componentId, themeName),
   };
 }
 
