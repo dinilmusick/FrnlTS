@@ -1,5 +1,5 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
-import type { FrnlElementDefinition } from '../elements/definition.js';
+import type { FrnlComponentDefinition } from './component-definition.js';
 import { z } from 'zod';
 import {
   entityIdSchema,
@@ -19,7 +19,6 @@ import {
   flowTriggeredPayloadSchema,
   stateNameSchema,
   frnlEventSchema,
-  type EntityKind,
   type EntityState,
   type SlotState,
   type SlotCollectionState,
@@ -45,7 +44,7 @@ export interface FrnlState {
   slots: Record<string, SlotState>;
   slotCollections: Record<string, SlotCollectionState>;
   events: FrnlEvent[];
-  elementDefinitions: Record<string, FrnlElementDefinition>;
+  componentDefinitions: Record<string, FrnlComponentDefinition>;
   eventHandlers: Record<string, Record<string, (
     payload: unknown,
     context: { readonly componentId: string; readonly state: string; setState(state: string): void; setVisualParameter(parameter: string, value: unknown): void; getLibrary<T = unknown>(address: string): T }
@@ -61,7 +60,7 @@ export interface FrnlState {
   setEntityBounds: (entityId: string, bounds?: Bounds) => void;
   setSlotProperty: (slotId: string, key: string, value: unknown) => void;
   setSlotProperties: (slotId: string, properties: Record<string, unknown>) => void;
-  replaceSlotOccupant: (slotId: string, occupant: { id: string; kind: EntityKind } | null) => void;
+  replaceSlotOccupant: (slotId: string, occupant: { id: string } | null) => void;
   registerEntity: (entityId: string, entity: EntityState) => void;
   registerSlot: (slotId: string, slot: SlotState) => void;
   registerSlotCollection: (collectionId: string, collection: { address: string; slotIds: string[] }) => void;
@@ -70,7 +69,7 @@ export interface FrnlState {
   removeSlotFromCollection: (collectionId: string, slotId: string) => void;
   triggerFlow: (flowId: string, compositeId: string, trigger: string, payload?: unknown) => void;
   emit: (event: FrnlEvent) => void;
-  registerElementDefinition: (componentId: string, definition: FrnlElementDefinition) => void;
+  registerComponentDefinition: (componentId: string, definition: FrnlComponentDefinition) => void;
   registerTheme: (name: string, theme: FrnlThemeDefinition) => void;
   applyTheme: (componentId: string, themeName: string) => void;
   registerEventHandlers: (componentId: string, handlers: Record<string, (
@@ -98,7 +97,7 @@ export function createFrnlStore(
     slots: initialSlots,
     slotCollections: initialCollections,
     events: [],
-    elementDefinitions: {},
+    componentDefinitions: {},
     eventHandlers: {},
     componentParents: {},
     visualOverrides: {},
@@ -106,12 +105,12 @@ export function createFrnlStore(
     componentThemes: {},
     libraries: {},
 
-    registerElementDefinition: (componentId, definition) => {
+    registerComponentDefinition: (componentId, definition) => {
       const id = entityIdSchema.parse(componentId);
       for (const theme of Object.values(get().themes)) {
         validateFrnlThemeAgainstDefinition(theme, definition);
       }
-      set((current) => ({ elementDefinitions: { ...current.elementDefinitions, [id]: definition } }));
+      set((current) => ({ elementDefinitions: { ...current.componentDefinitions, [id]: definition } }));
     },
 
     registerTheme: (name, theme) => {
@@ -162,18 +161,18 @@ export function createFrnlStore(
       const id = entityIdSchema.parse(entityId);
       set((current) => {
         const entities = { ...current.entities };
-        const elementDefinitions = { ...current.elementDefinitions };
+        const componentDefinitions = { ...current.componentDefinitions };
         const eventHandlers = { ...current.eventHandlers };
         const componentParents = { ...current.componentParents };
         const visualOverrides = { ...current.visualOverrides };
         const componentThemes = { ...current.componentThemes };
         delete entities[id];
-        delete elementDefinitions[id];
+        delete componentDefinitions[id];
         delete eventHandlers[id];
         delete componentParents[id];
         delete visualOverrides[id];
         delete componentThemes[id];
-        return { entities, elementDefinitions, eventHandlers, componentParents, visualOverrides, componentThemes };
+        return { entities, componentDefinitions, eventHandlers, componentParents, visualOverrides, componentThemes };
       });
     },
 
@@ -530,10 +529,7 @@ export function createFrnlStore(
       set((current) => {
         const slot = current.slots[id];
         if (!slot) return current;
-        const previousOccupant =
-          slot.occupantId && slot.occupantKind
-            ? { id: slot.occupantId, kind: slot.occupantKind }
-            : null;
+        const previousOccupant = slot.occupantId ? { id: slot.occupantId } : null;
         const payload = slotOccupantChangedPayloadSchema.parse({
           slotId: id,
           address: slot.address,
@@ -546,7 +542,6 @@ export function createFrnlStore(
             [id]: {
               ...slot,
               occupantId: validatedOccupant?.id ?? null,
-              occupantKind: validatedOccupant?.kind ?? null,
             },
           },
           events: [...current.events, { type: 'slot.occupantChanged' as const, payload }],
@@ -560,7 +555,7 @@ export function createFrnlStore(
       const trig = z.string().min(1).parse(trigger);
       const eventPayload = flowTriggeredPayloadSchema.parse({
         flowId: fId,
-        compositeId: cId,
+        componentId: cId,
         trigger: trig,
         payload,
       });
