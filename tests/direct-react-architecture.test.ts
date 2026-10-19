@@ -1,9 +1,12 @@
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import * as RootExports from '../src/index.js';
 import * as RuntimeExports from '../src/runtime/index.js';
 import * as ReactExports from '../src/react/index.js';
+
+const here = dirname(fileURLToPath(import.meta.url));
 
 describe('direct React component architecture', () => {
   it('has no legacy wrapper asset directories or documentation', () => {
@@ -16,7 +19,7 @@ describe('direct React component architecture', () => {
       '../tests/ui-composite-invariants.md',
       '../tests/fixtures/elements',
     ]) {
-      expect(existsSync(resolve(import.meta.dirname, path))).toBe(false);
+      expect(existsSync(resolve(here, path))).toBe(false);
     }
   });
 
