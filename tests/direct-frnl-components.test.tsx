@@ -114,12 +114,22 @@ describe('direct Frnl React components', () => {
       store.getState().registerTheme('Dark', {
         button: { states: { idle: { visualParameters: { opacity: 0.25 } } } },
       });
+      store.getState().registerTheme('Light', {
+        button: { states: { idle: { visualParameters: { opacity: 0.75 } } } },
+      });
       latestFrnl?.applyTheme('Dark');
     });
 
     expect(screen.getByTestId('button')).toHaveAttribute('data-state', 'idle');
     expect(screen.getByTestId('button')).toHaveAttribute('data-opacity', '0.25');
     expect(store.getState().componentThemes['button-1']).toBe('Dark');
+
+    act(() => {
+      latestFrnl?.applyTheme('Light');
+    });
+
+    expect(screen.getByTestId('button')).toHaveAttribute('data-opacity', '0.75');
+    expect(store.getState().componentThemes['button-1']).toBe('Light');
   });
 
   it('cleans up runtime entity, definition, handlers, and visual overrides on unmount', () => {
