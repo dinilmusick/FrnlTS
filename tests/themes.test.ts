@@ -11,7 +11,7 @@ import { getFrnlComponentHandle, getFrnlVisualParameters, setFrnlVisualParameter
 
 const definition = defineFrnlComponent({
   name: 'Button',
-  states: {
+    states: {
     Idle: {
       name: 'Idle',
       visualParameters: { opacity: 1, scale: 1 },
@@ -38,11 +38,11 @@ const definition = defineFrnlComponent({
 describe('Frnl component themes', () => {
   it('applies component/state theme values over state fallbacks', () => {
     const store = createFrnlStore();
-    store.getState().registerEntity('button', { , state: 'Idle', properties: {} });
+    store.getState().registerEntity('button', { state: 'Idle', properties: {} });
     store.getState().registerComponentDefinition('button', definition);
     registerFrnlTheme(store, 'Dark', {
       Button: {
-        states: {
+          states: {
           Idle: { visualParameters: { opacity: 0.4 } },
         },
       },
@@ -57,7 +57,7 @@ describe('Frnl component themes', () => {
 
   it('falls back when a theme omits the component or current state', () => {
     const store = createFrnlStore();
-    store.getState().registerEntity('button', { , state: 'Pressed', properties: {} });
+    store.getState().registerEntity('button', { state: 'Pressed', properties: {} });
     store.getState().registerComponentDefinition('button', definition);
     registerFrnlTheme(store, 'Dark', {
       Button: { states: { Idle: { visualParameters: { opacity: 0.4 } } } },
@@ -70,11 +70,11 @@ describe('Frnl component themes', () => {
 
   it('keeps the selected theme across state changes and clears surgical overrides', () => {
     const store = createFrnlStore();
-    store.getState().registerEntity('button', { , state: 'Idle', properties: {} });
+    store.getState().registerEntity('button', { state: 'Idle', properties: {} });
     store.getState().registerComponentDefinition('button', definition);
     registerFrnlTheme(store, 'Dark', {
       Button: {
-        states: {
+          states: {
           Idle: { visualParameters: { opacity: 0.4 } },
           Pressed: { visualParameters: { opacity: 0.2 } },
         },
@@ -91,7 +91,7 @@ describe('Frnl component themes', () => {
 
   it('clears surgical overrides when a component applies a new theme', () => {
     const store = createFrnlStore();
-    store.getState().registerEntity('button', { , state: 'Idle', properties: {} });
+    store.getState().registerEntity('button', { state: 'Idle', properties: {} });
     store.getState().registerComponentDefinition('button', definition);
     registerFrnlTheme(store, 'Dark', {
       Button: { states: { Idle: { visualParameters: { opacity: 0.4 } } } },
@@ -109,7 +109,7 @@ describe('Frnl component themes', () => {
 
   it('falls back to state visuals when the theme omits the component entirely', () => {
     const store = createFrnlStore();
-    store.getState().registerEntity('button', { , state: 'Idle', properties: {} });
+    store.getState().registerEntity('button', { state: 'Idle', properties: {} });
     store.getState().registerComponentDefinition('button', definition);
     registerFrnlTheme(store, 'Minimal', {
       OtherComponent: { states: { Idle: { visualParameters: { opacity: 0.2 } } } },
@@ -122,7 +122,7 @@ describe('Frnl component themes', () => {
 
   it('gives surgical instance overrides priority over theme values', () => {
     const store = createFrnlStore();
-    store.getState().registerEntity('button', { , state: 'Idle', properties: {} });
+    store.getState().registerEntity('button', { state: 'Idle', properties: {} });
     store.getState().registerComponentDefinition('button', definition);
     registerFrnlTheme(store, 'Dark', {
       Button: { states: { Idle: { visualParameters: { opacity: 0.4, scale: 0.9 } } },
@@ -142,7 +142,7 @@ describe('Frnl component themes', () => {
 
   it('rejects themes that reference unknown states for registered element definitions', () => {
     const store = createFrnlStore();
-    store.getState().registerEntity('button', { , state: 'Idle', properties: {} });
+    store.getState().registerEntity('button', { state: 'Idle', properties: {} });
     store.getState().registerComponentDefinition('button', definition);
 
     expect(() => registerFrnlTheme(store, 'Invalid', {
@@ -153,7 +153,7 @@ describe('Frnl component themes', () => {
 
   it('rejects applying an unregistered theme', () => {
     const store = createFrnlStore();
-    store.getState().registerEntity('button', { , state: 'Idle', properties: {} });
+    store.getState().registerEntity('button', { state: 'Idle', properties: {} });
     store.getState().registerComponentDefinition('button', definition);
 
     expect(() => applyFrnlTheme(store, 'button', 'Missing')).toThrow('Unknown Frnl theme');
@@ -182,7 +182,7 @@ describe('Frnl component themes', () => {
 
   it('rejects element definitions registered after an incompatible theme', () => {
     const store = createFrnlStore();
-    store.getState().registerEntity('button', { , state: 'Idle', properties: {} });
+    store.getState().registerEntity('button', { state: 'Idle', properties: {} });
 
     // Register theme referencing state "Ghost" before Button definition exists
     registerFrnlTheme(store, 'PreRegisteredInvalid', {
@@ -198,7 +198,7 @@ describe('Frnl component themes', () => {
 
   it('supports valid themes registered before element definitions', () => {
     const store = createFrnlStore();
-    store.getState().registerEntity('button', { , state: 'Idle', properties: {} });
+    store.getState().registerEntity('button', { state: 'Idle', properties: {} });
 
     registerFrnlTheme(store, 'EarlyValid', {
       Button: { states: { Idle: { visualParameters: { opacity: 0.35 } } } },
@@ -212,7 +212,7 @@ describe('Frnl component themes', () => {
 
   it('allows applying themes directly through getFrnlComponentHandle', () => {
     const store = createFrnlStore();
-    store.getState().registerEntity('button', { , state: 'Idle', properties: {} });
+    store.getState().registerEntity('button', { state: 'Idle', properties: {} });
     store.getState().registerComponentDefinition('button', definition);
     registerFrnlTheme(store, 'Dark', {
       Button: { states: { Idle: { visualParameters: { opacity: 0.45 } } } },
@@ -229,7 +229,7 @@ describe('Frnl component themes', () => {
 
   it('falls back gracefully when theme omits individual parameters or visualParameters entirely', () => {
     const store = createFrnlStore();
-    store.getState().registerEntity('button', { , state: 'Idle', properties: {} });
+    store.getState().registerEntity('button', { state: 'Idle', properties: {} });
     store.getState().registerComponentDefinition('button', definition);
 
     // Only overrides scale, opacity omitted
