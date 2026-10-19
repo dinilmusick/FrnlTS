@@ -73,7 +73,7 @@ ${states.flatMap((state) => events.map((event) => `  '${name}.${state}.${event}'
 
 export const ${state}State: FrnlStateDefinition = {
   name: '${state}',
-  events: {
+  visualParameters: {\n    opacity: 1,\n  },\n  events: {
 ${eventDefs}
   },
   phases: {
@@ -87,10 +87,10 @@ ${eventDefs}
 `);
     write(path.join(componentDir, 'States', state, 'Events', '.gitkeep'), '');
     for (const event of events) {
-      write(path.join(componentDir, 'States', state, 'Events', `${event}.ts`), `export function ${state}${event}(payload: unknown): unknown {
+      write(path.join(componentDir, 'States', state, 'Events', `${event}.ts`), `export function ${state}${event}(payload: unknown, context: import('@dinilmusick/frnlts').FrnlEventContext): unknown {
   // Keep this state-specific event function intentionally small.
   // Delegate implementation to component Libraries.
-  void payload;
+  void payload;\n  void context;
 }
 `);
     }
