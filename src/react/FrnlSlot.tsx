@@ -1,13 +1,12 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import type { StoreApi } from 'zustand/vanilla';
 import { useStore } from 'zustand';
-import type { FrnlState, EntityKind } from '../runtime/store.js';
+import type { FrnlState } from '../runtime/store.js';
 
 export interface FrnlSlotProps {
   id: string;
   address: string;
   occupantId?: string | null;
-  occupantKind?: EntityKind | null;
   occupants?: Record<string, ReactNode>;
   properties?: Record<string, unknown>;
   className?: string;
@@ -16,12 +15,12 @@ export interface FrnlSlotProps {
 }
 
 export function FrnlSlot({
-  id, address, occupantId = null, occupantKind = null, occupants = {}, properties = {},
+  id, address, occupantId = null, occupants = {}, properties = {},
   className, style, store,
 }: FrnlSlotProps) {
   useEffect(() => {
     store.getState().registerSlot(id, {
-      id, address, occupantId: occupantId ?? null, occupantKind: occupantKind ?? null, properties,
+      id, address, occupantId: occupantId ?? null, properties,
     });
   }, [id, address, store]);
 
