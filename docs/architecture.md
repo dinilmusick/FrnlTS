@@ -59,9 +59,23 @@ React handlers, keyboard bindings, application code, and other components theref
 
 React owns children, composition, layout, positioning, dimensions, and DOM bounds. FrnlTS does not maintain a parallel layout or slot tree.
 
-## Flows
+## Page orchestration
 
-Flows coordinate component events, state transitions, property changes, data operations, and external functions. A flow is orchestration data/runtime, not another UI component type.
+FrnlTS defines the canonical \`FrnlOrchestrationDefinition\` and runtime API. A page is the scope that knows which concrete component instances exist, so page-local \`orchestrations/\` definitions may subscribe to existing component events and invoke other component events or legitimate library capabilities.
+
+Orchestration is sequencing/wiring, not a new business-logic layer. Reusable domain behavior belongs in libraries/functions. Page events remain appropriate for genuine page-level events.
+
+\`\`\`text
+page scope
+   │
+   ├── component A event ──┐
+   │                       ▼
+   │                 Frnl orchestration
+   │                       │
+   └── component B event ◄─┘
+\`\`\`
+
+Generated page orchestration files are validated as Frnl definitions and are limited to 200 lines.
 
 ## Temporal model
 
