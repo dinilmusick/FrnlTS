@@ -9,3 +9,4 @@ export * from './validation.js';
 export * from './events.js';
 export * from './libraries.js';
 export * from './facade.js';
+export * from './themes.js';
