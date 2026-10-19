@@ -62,13 +62,19 @@ export function useFrnlComponent({
     previousProps.current = { state: state ?? initialState, properties, bounds };
   }, [id, state, properties, bounds, initialState, store]);
 
+  const handlerKeys = useMemo(() => Object.keys(handlers).sort().join('\0'), [handlers]);
+
   useEffect(() => {
-    store.getState().registerEventHandlers(id, {
-      ...handlers,
-      ...Object.fromEntries(Object.keys(handlersRef.current).map((key) => [key, handlersRef.current[key]])),
-    });
+    const stableHandlers = Object.fromEntries(
+      Object.keys(handlers).map((functionId) => [
+        functionId,
+        (payload: unknown) => handlersRef.current[functionId]?.(payload),
+      ]),
+    );
+    store.getState().registerEventHandlers(id, stableHandlers);
     return () => store.getState().unregisterEventHandlers(id);
-  }, [id, store]);
+  }, [id, store, handlerKeys]);
+
 
   const entity = useStoreState(store, id);
   const events = useMemo(() => {
