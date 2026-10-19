@@ -1,73 +1,46 @@
 # Events
 
-FRNL has two event ownership levels:
+Frnl events are owned by component state definitions and resolved through the component's current state.
 
-- **UI Primitive Events** belong to UI Primitives.
-- **Slot Events** belong to Slots.
+## Event resolution
 
-UI Composites consume these events through Flows but do not take ownership of Primitive Events.
+```text
+React event / keyboard / application code / another component
+                         ↓
+                    component event
+                         ↓
+                  current Frnl state
+                         ↓
+                  state.events[event]
+                         ↓
+                     functionId
+                         ↓
+                      handler
+```
 
-## Primitive Events
+The source of an input does not directly invoke the implementation. It enters the same semantic event resolution path.
 
-A UI Primitive owns its Events. Events are callable interaction or programmatic occurrences exposed by that Primitive.
+## State-local events
 
-FRNL supports event concepts based on pointer/mouse interaction, such as hover and click; keyboard input, including keyboard presses and linked hotkeys; focus/input-state events; and custom programmatic events.
+A state may define an event with a given name and function ID. The same event name may resolve to a different function when the component changes state.
 
-Pointer interaction is evaluated against the Primitive's Bounds, not against individual Visual Assets.
+This keeps event behavior declarative while handlers remain ordinary application functions.
 
-## Slot Events
+## Slot events
 
-A Slot has its own Event boundary because the Slot is a live container whose occupant can change during rendering.
+Slots have their own lifecycle event boundary:
 
-At minimum, every Slot supports:
+- **stateChanged** observes state transitions of the current occupant.
+- **occupantChanged** observes replacement/removal of the current occupant.
+- **propertyChanged** observes Slot property changes.
+- **collectionChanged** observes repeatable Slot collection changes.
 
-### State Changed
-
-Fired when the State of the UI Primitive or UI Composite currently occupying the Slot changes.
-
-State ownership remains with the occupant. The Slot observes the transition and exposes it as a Slot Event.
-
-### Occupant Changed
-
-Fired when the UI Primitive or UI Composite occupying the Slot is replaced.
-
-The Slot remains the same semantic entity while the occupant changes.
-
-    Slot: content
-        OverviewSection
-            ↓
-        ActivitySection
-
-    content.occupantChanged
-
-Additional Slot Events may be defined for Slot Property changes, repeatable Slot collection membership, or other Slot lifecycle conditions.
-
-## Events and Composites
-
-A UI Composite does not take ownership of the contained Primitive's Events. Instead, the Composite can reference and consume Primitive Events and Slot Events in its Flows.
-
-Conceptually:
-
-    Primitive Event ─┐
-                    ├──> Composite Flow
-    Slot Event ──────┘
-                           ↓
-                action / state change / external function
-
-This separation keeps source-event ownership clear while allowing Composites to coordinate multiple entities.
+Slot events can be consumed by flows or application code without becoming events of the occupant component.
 
 ## Callable events
 
-Every Primitive event exposes a callable interface that can invoke external application functions.
+Every registered component event exposes a callable interface through the runtime. React handlers, keyboard bindings, application code, and other components can use the same trigger.
 
-Slot Events expose a callable event interface to the containing Composite's Flow system.
+## Payload validation
 
-Custom events can be triggered by code against a UI Primitive or, where defined, a Slot.
-
-FRNL defines the event semantics and interface. The application owns the implementation of the functions invoked by events.
-
-## Event payload validation
-
-Event payloads are runtime-validated with **Zod**. Each framework-defined event has a corresponding Zod payload schema, and emitted payloads must satisfy that schema before entering the event stream.
-
-This applies to Primitive Events, Slot Events, and framework-defined programmatic event payloads. TypeScript types remain the compile-time representation of the same contracts.
+Framework-defined event payloads cross a Zod validation boundary before being recorded or dispatched.
