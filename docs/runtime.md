@@ -35,7 +35,7 @@ Ordinary React components
         └── accessibility validation
 ```
 
-There is no Frnl primitive/composite renderer layer. React components are rendered by React.
+There is no Frnl renderer layer. React components are rendered by React.
 
 ## Package subpaths
 
