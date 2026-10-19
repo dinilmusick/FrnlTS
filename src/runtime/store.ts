@@ -12,10 +12,7 @@ import {
   stateNameSchema,
   frnlEventSchema,
   type EntityState,
-  type SlotState,
-  type SlotCollectionState,
   type FrnlEvent,
-  type Bounds,
   frnlThemeDefinitionSchema,
 } from './validation.js';
 import { validateFrnlThemeAgainstDefinition, type FrnlThemeDefinition } from './themes.js';
@@ -23,7 +20,6 @@ import { validateFrnlThemeAgainstDefinition, type FrnlThemeDefinition } from './
 export type {
   EntityState,
   FrnlEvent,
-  Bounds,
 } from './validation.js';
 
 export type FrnlStore = StoreApi<FrnlState>;
