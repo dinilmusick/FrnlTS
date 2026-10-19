@@ -30,7 +30,10 @@
   "scripts": {
     "build": "tsup src/index.ts src/react/index.ts src/runtime/index.ts --format esm --dts --clean --external react --external react-dom",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:all": "pnpm -r build",
+    "test:all": "pnpm -r test",
+    "typecheck:all": "pnpm -r typecheck"
   },
   "dependencies": {
     "zod": "^3.25.0",
@@ -62,5 +65,8 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "packageManager": "pnpm@9.15.0"
+  "packageManager": "pnpm@9.15.0",
+  "workspaces": [
+    "packages/*"
+  ]
 }
