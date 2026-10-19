@@ -12,11 +12,6 @@ Ordinary React component
         │      ├── themes
         │      └── component scope
         │
-        ├── FrnlSlot
-        │      ├── stable address
-        │      ├── slot properties
-        │      └── occupant lifecycle
-        │
         └── normal React composition
                 │
                 ▼
@@ -31,14 +26,12 @@ A component can have:
 
 - state
 - properties
-- bounds
 - visual definitions
 - state-local events
 - event handlers
 - a semantic parent
 - a selected theme
 - libraries
-- slot participation
 
 Whether a component is visually atomic, renders children, represents a page, or coordinates a complex UI is an implementation concern of that React component. It does not change its Frnl runtime category.
 
@@ -62,13 +55,9 @@ registered handler
 
 React handlers, keyboard bindings, application code, and other components therefore use the same semantic event path.
 
-## Slots
+## React composition
 
-A Slot is a live, addressable boundary for rendered component content. It preserves its identity and address while its occupant changes.
-
-Slot state includes the occupant identifier and slot properties. Occupant replacement emits `slot.occupantChanged`; state changes of the occupying component emit `slot.stateChanged`.
-
-Slots can be used recursively because an occupant is simply another component instance.
+React owns children, composition, layout, positioning, dimensions, and DOM bounds. FrnlTS does not maintain a parallel layout or slot tree.
 
 ## Flows
 
