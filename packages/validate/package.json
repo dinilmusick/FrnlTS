@@ -1,11 +1,7 @@
 {
   "name": "@ultrst-armada/frnlts-validate",
-  "version": "0.1.0",
-  "private": false,
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org/"
-  },
+  "version": "0.2.3",
+  "private": true,
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
