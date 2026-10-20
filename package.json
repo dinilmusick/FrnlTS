@@ -1,14 +1,16 @@
 {
   "name": "@ultrst-armada/frnlts",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": false,
   "type": "module",
-  "description": "Frnl React component framework with Zustand-backed state, hierarchical component scopes, and state-resolved addressable events.",
+  "description": "FrnlTS semantic frontend runtime, validation tooling, and CLI for React applications.",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "packages/*/dist/**",
+    "packages/*/package.json"
   ],
   "exports": {
     ".": {
@@ -25,15 +27,28 @@
       "types": "./dist/runtime/index.d.ts",
       "import": "./dist/runtime/index.js",
       "default": "./dist/runtime/index.js"
+    },
+    "./validate": {
+      "types": "./packages/validate/dist/index.d.ts",
+      "import": "./packages/validate/dist/index.js",
+      "default": "./packages/validate/dist/index.js"
+    },
+    "./cli": {
+      "types": "./packages/cli/dist/index.d.ts",
+      "import": "./packages/cli/dist/index.js",
+      "default": "./packages/cli/dist/index.js"
     }
   },
+  "bin": {
+    "frnl": "./packages/cli/dist/bin/frnl.js"
+  },
   "scripts": {
-    "build": "tsup src/index.ts src/react/index.ts src/runtime/index.ts --format esm --dts --clean --external react --external react-dom",
-    "test": "vitest run",
-    "typecheck": "tsc --noEmit",
-    "build:all": "pnpm -r build",
-    "test:all": "pnpm -r test",
-    "typecheck:all": "pnpm -r typecheck"
+    "build": "pnpm -r run build && tsup src/index.ts src/react/index.ts src/runtime/index.ts --format esm --dts --clean --external react --external react-dom",
+    "test": "pnpm -r run test && vitest run",
+    "typecheck": "pnpm -r run typecheck && tsc --noEmit",
+    "validate": "node packages/cli/dist/bin/frnl.js validate",
+    "dev": "node packages/cli/dist/bin/frnl.js dev",
+    "watch": "node packages/cli/dist/bin/frnl.js watch"
   },
   "dependencies": {
     "zod": "^3.25.0",
