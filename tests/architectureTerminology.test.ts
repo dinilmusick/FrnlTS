@@ -6,7 +6,7 @@ describe('FrnlTS architecture terminology', () => {
   const readme = readFileSync(resolve(process.cwd(), 'README.md'), 'utf8');
 
   it('describes the direct React component model', () => {
-    expect(readme).toContain('There is one component model.');
+    expect(readme).toContain('**React components** are the concrete UI entities.');
     expect(readme).toContain('useFrnlComponent()');
   });
 
