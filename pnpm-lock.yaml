@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@dinilmusick/gutts':
+        specifier: ^0.1.0
+        version: 0.1.1
       zod:
         specifier: ^3.25.0
         version: 3.25.76
@@ -148,6 +151,9 @@ packages:
   '@csstools/css-tokenizer@4.0.2':
     resolution: {integrity: sha512-OoKoR0f76dCY666JlcbhmVTs2drYj1GUXZTYTcbUgJjh9Nv41aFfZ21bPQTERm5+L5cBDo466NltB2lplS5GBw==}
     engines: {node: '>=20.19.0'}
+
+  '@dinilmusick/gutts@0.1.1':
+    resolution: {integrity: sha512-E+GaMb0n9MBaqWLwqP0Xfx6K5Ms2Gf57tOFzeL5G2Z4u5R+cd+/yUHiIT6a8blf3jNMcVgJjVYa45j17XarSEg==}
 
   '@esbuild/aix-ppc64@0.27.7':
     resolution: {integrity: sha512-EKX3Qwmhz1eMdEJokhALr0YiD0lhQNwDqkPYyPhiSwKrh7/4KRjQc04sZ8db+5DVVnZ1LmbNDI1uAMPEUBnQPg==}
@@ -901,6 +907,9 @@ packages:
     resolution: {integrity: sha512-IXO6OCs9yg8tMKzfPZ1YmheJbZCiEsnBdcB03l0OcfK9prKnJb96siuHCr5Fl37/yo9DnKU+TLpxzTUspw9shg==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
+  lodash-es@4.18.1:
+    resolution: {integrity: sha512-J8xewKD/Gk22OZbhpOVSwcs60zhd95ESDwezOFuA3/099925PdHJ7OFHNTGtajL3AlZkykD32HykiMo+BIBI8A==}
+
   loupe@3.2.1:
     resolution: {integrity: sha512-CdzqowRJCeLU72bHvWqwRBBlLcMEtIvGrlvef74kMnV2AolS9Y8xUv1I0U/MNAWMhBlKIoyuEgoJ0t/bbwHbLQ==}
 
@@ -1151,6 +1160,10 @@ packages:
     resolution: {integrity: sha512-XtuDWVdqTLr3NAxm2ly9/hU6kUsJOgGh1RASzMBbsw6aWCOaQzHdW+QQDfdERjfJ2V5vL5pRPa4RetO9UfivDg==}
     engines: {node: '>=22.19.0'}
 
+  validator@13.15.35:
+    resolution: {integrity: sha512-TQ5pAGhd5whStmqWvYF4OjQROlmv9SMFVt37qoCBdqRffuuklWYQlCNnEs2ZaIBD1kZRNnikiZOS1eqgkar0iw==}
+    engines: {node: '>= 0.10'}
+
   vite-node@3.2.4:
     resolution: {integrity: sha512-EbKSKh+bh1E1IFxeO0pg1n4dvoOTt0UDiXMd/qn++r98+jPO1xtJilvXldeuQ8giIB5IkpjCgMleHMNEsGH6pg==}
     engines: {node: ^18.0.0 || ^20.0.0 || >=22.0.0}
@@ -1354,6 +1367,11 @@ snapshots:
 
   '@csstools/css-tokenizer@4.0.2':
     optional: true
+
+  '@dinilmusick/gutts@0.1.1':
+    dependencies:
+      lodash-es: 4.18.1
+      validator: 13.15.35
 
   '@esbuild/aix-ppc64@0.27.7':
     optional: true
@@ -1946,6 +1964,8 @@ snapshots:
 
   load-tsconfig@0.2.5: {}
 
+  lodash-es@4.18.1: {}
+
   loupe@3.2.1: {}
 
   lru-cache@11.5.3:
@@ -2194,6 +2214,8 @@ snapshots:
 
   undici@8.12.2:
     optional: true
+
+  validator@13.15.35: {}
 
   vite-node@3.2.4(@types/node@22.20.5):
     dependencies:
