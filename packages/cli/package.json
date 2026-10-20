@@ -19,7 +19,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ultrst-armada/frnlts": "workspace:*"
+    "@ultrst-armada/frnlts": "workspace:*",
+    "@ultrst-armada/frnlts-validate": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.4.0",
