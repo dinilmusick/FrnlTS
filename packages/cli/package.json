@@ -1,11 +1,7 @@
 {
   "name": "@ultrst-armada/frnlts-cli",
-  "version": "0.1.0",
-  "private": false,
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org/"
-  },
+  "version": "0.2.3",
+  "private": true,
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -23,8 +19,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ultrst-armada/frnlts": "workspace:*",
-    "@ultrst-armada/frnlts-validate": "workspace:*"
+    "@ultrst-armada/frnlts": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.4.0",
