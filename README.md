@@ -30,6 +30,10 @@ React component
 - **Themes** provide optional visual parameter overrides for named components and states.
 - **Libraries** provide centrally addressable component/application functions and data.
 
+## Page orchestration
+
+Pages are application scope, not a second component hierarchy. FrnlTS defines the page orchestration contract; Skipo owns application composition and resolves concrete page components from Floks.
+
 ## Direct React integration
 
 Use `useFrnlComponent()` inside the actual React component:
