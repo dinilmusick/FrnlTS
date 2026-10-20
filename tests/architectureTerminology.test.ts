@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 describe('FrnlTS canonical architecture documentation', () => {
-  const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
+  const readme = readFileSync(resolve(process.cwd(), 'README.md'), 'utf8');
 
   it('does not advertise the retired slot hierarchy', () => {
     expect(readme).not.toMatch(/^## Slots$/m);
