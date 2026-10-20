@@ -41,13 +41,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Typecheck
-        run: pnpm typecheck
-
-      # Workspace packages expose dist/ entry points. Build those before tests
-      # that import the validator package through its public workspace export.
+      # Workspace packages expose dist/ entry points used by typechecking and tests.
       - name: Build packages
         run: pnpm -r build && pnpm build
+
+      - name: Typecheck
+        run: pnpm typecheck
 
       - name: Run Vitest Suite
         run: pnpm test
@@ -66,9 +65,9 @@ jobs:
           npm init -y
           npm install "$TARBALL"
           node --input-type=module -e "
-            import * as Root from '@dinilmusick/frnlts';
-            import * as Runtime from '@dinilmusick/frnlts/runtime';
-            import * as React from '@dinilmusick/frnlts/react';
+            import * as Root from '@ultrst-armada/frnlts';
+            import * as Runtime from '@ultrst-armada/frnlts/runtime';
+            import * as React from '@ultrst-armada/frnlts/react';
 
             if (typeof Root.createLifecycle !== 'function') throw new Error('Missing Root.createLifecycle');
             if (typeof Root.registerFrnlTheme !== 'function') throw new Error('Missing Root.registerFrnlTheme');
