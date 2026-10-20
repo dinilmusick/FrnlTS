@@ -30,7 +30,7 @@ There is one component model. A component may render children, participate in fl
 - **React components** are the concrete UI entities.
 - **States** own state-local events, visual parameters, and Attack/Sustain/Release definitions.
 - **Events** resolve against the component's current state before invoking the registered handler.
-- **Flows** coordinate events, state changes, slot changes, data, and external functions.
+- **Flows** coordinate events, state changes, component/page data, and external functions.
 - **Themes** provide optional visual parameter overrides for named components and states.
 - **Libraries** provide centrally addressable component/application functions and data.
 
@@ -72,8 +72,9 @@ React input / keyboard / application code / another component
 
 The input source does not directly own the handler implementation.
 
-## Slots
+## Page orchestration
 
+Pages are application scope, not a second component hierarchy. FrnlTS defines the page orchestration contract; Skipo owns the application `components/components.ts` facade that resolves the concrete `FrnlPage` implementation from Floks.
 
 ## Themes
 
