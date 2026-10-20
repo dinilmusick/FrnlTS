@@ -9,8 +9,11 @@ importers:
   .:
     dependencies:
       '@dinilmusick/gutts':
-        specifier: ^0.1.0
-        version: 0.1.1
+        specifier: ^0.1.2
+        version: 0.1.2
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
       zod:
         specifier: ^3.25.0
         version: 3.25.76
@@ -42,9 +45,6 @@ importers:
       tsup:
         specifier: ^8.4.0
         version: 8.5.1(postcss@8.5.30)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.7.3
-        version: 5.9.3
       vitest:
         specifier: ^3.1.0
         version: 3.2.7(@types/node@26.6.5)(happy-dom@21.0.3)(jsdom@30.1.3)
@@ -152,8 +152,8 @@ packages:
     resolution: {integrity: sha512-OoKoR0f76dCY666JlcbhmVTs2drYj1GUXZTYTcbUgJjh9Nv41aFfZ21bPQTERm5+L5cBDo466NltB2lplS5GBw==}
     engines: {node: '>=20.19.0'}
 
-  '@dinilmusick/gutts@0.1.1':
-    resolution: {integrity: sha512-E+GaMb0n9MBaqWLwqP0Xfx6K5Ms2Gf57tOFzeL5G2Z4u5R+cd+/yUHiIT6a8blf3jNMcVgJjVYa45j17XarSEg==}
+  '@dinilmusick/gutts@0.1.2':
+    resolution: {integrity: sha512-W0ndYbtyOtEP4K0l75h+KJqLJ0vVIc1igbP20AZ63E07Y6KMtLoqxMqucoXUPoAPseOEvFjRWj7aE6+1KrDYgw==}
 
   '@esbuild/aix-ppc64@0.27.7':
     resolution: {integrity: sha512-EKX3Qwmhz1eMdEJokhALr0YiD0lhQNwDqkPYyPhiSwKrh7/4KRjQc04sZ8db+5DVVnZ1LmbNDI1uAMPEUBnQPg==}
@@ -1368,7 +1368,7 @@ snapshots:
   '@csstools/css-tokenizer@4.0.2':
     optional: true
 
-  '@dinilmusick/gutts@0.1.1':
+  '@dinilmusick/gutts@0.1.2':
     dependencies:
       lodash-es: 4.18.1
       validator: 13.15.35
