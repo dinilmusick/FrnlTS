@@ -26,7 +26,7 @@ React component
 - **React components** are the concrete UI entities.
 - **States** own state-local events, visual parameters, and Attack/Sustain/Release definitions.
 - **Events** resolve against the component's current state before invoking the registered handler.
-- **Flows** coordinate events, state changes, slot changes, data, and external functions.
+- **Flows** coordinate events, state changes, component/page data, and external functions.
 - **Themes** provide optional visual parameter overrides for named components and states.
 - **Libraries** provide centrally addressable component/application functions and data.
 
