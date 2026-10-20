@@ -1,16 +1,15 @@
-# FrnlTS (@dinilmusick/frnlts)
+# FrnlTS (@ultrst-armada/frnlts)
 
-> A semantic frontend runtime for ordinary React components.
+> A semantic frontend runtime for ordinary React components, with integrated workspace validation and CLI tooling.
 
 FrnlTS does not wrap React components in semantic classes, renderer classes, or adapter component hierarchies. The React component is the component. FrnlTS attaches state, state-resolved events, visual definitions, themes, flows, and runtime lifecycle machinery to that component.
 
 ## Architectural role
 
-FrnlTS supplies frontend semantics and runtime machinery. Floks supplies concrete React UI components. Applications compose those ordinary React components.
+FrnlTS supplies frontend semantics, runtime machinery, validation, and developer tooling. Floks supplies concrete React UI components. Applications compose those ordinary React components.
 
 ```text
 React component
-    │
     ├── normal React props/rendering
     ├── useFrnlComponent()
     │      ├── Frnl state
@@ -18,12 +17,9 @@ React component
     │      ├── visual parameters
     │      └── component scope
     └── normal React composition
-             │
-             ▼
+             ↓
         Zustand-backed runtime
 ```
-
-There is one component model. A component may render children, participate in flows, or be nested in another component without acquiring a second runtime class.
 
 ## Core semantic model
 
@@ -50,53 +46,46 @@ const frnl = useFrnlComponent({
 return <button onClick={() => frnl.events.click()}>{children}</button>;
 ```
 
-The hook registers the component with the Frnl runtime and cleans it up when the React component unmounts. No Frnl wrapper object or rendering class is required.
+## Package layout
 
-## Event resolution
+Only **`@ultrst-armada/frnlts`** is published. Validation and CLI code live in this repository and ship inside the same npm package, following the single-root-package distribution model.
 
-Every input path should converge on the same semantic event:
+| Import / command | Purpose |
+|---|---|
+| `@ultrst-armada/frnlts` | Main framework API |
+| `@ultrst-armada/frnlts/react` | `useFrnlComponent` and direct React integration |
+| `@ultrst-armada/frnlts/runtime` | Headless runtime |
+| `@ultrst-armada/frnlts/validate` | Workspace validation API |
+| `@ultrst-armada/frnlts/cli` | CLI programmatic API |
+| `frnl` | Installed command-line executable |
 
-```text
-React input / keyboard / application code / another component
-                         ↓
-                  component event
-                         ↓
-                  current state
-                         ↓
-                  state.events[event]
-                         ↓
-                   functionId
-                         ↓
-                    handler
+The internal `packages/validate` and `packages/cli` workspace projects are not separately published.
+
+## CLI
+
+After installing FrnlTS, use the `frnl` executable:
+
+```bash
+frnl validate
+frnl build
+frnl dev
+frnl watch
+frnl generate component Button --state=idle --event=click
+frnl generate page Home
 ```
-
-The input source does not directly own the handler implementation.
-
-## Slots
-
-
-## Themes
-
-Theme values are resolved in this order:
-
-```text
-State visual parameters
-        ↓
-Theme visual parameters
-        ↓
-Surgical instance overrides
-```
-
-Applying a theme and changing state clear surgical overrides while preserving the selected theme.
 
 ## Runtime validation
 
 External semantic inputs and runtime mutations cross Zod validation boundaries before entering the Zustand runtime.
 
-## Package exports
+## Development
 
-- `@dinilmusick/frnlts` — semantic runtime and component contracts.
-- `@dinilmusick/frnlts/runtime` — headless runtime.
-- `@dinilmusick/frnlts/react` — `useFrnlComponent` and direct React integration.
+```bash
+pnpm install --frozen-lockfile
+pnpm run build
+pnpm run typecheck
+pnpm run test
+pnpm run validate
+```
 
-Concrete UI remains ordinary React code.
+Concrete UI components remain ordinary React code and belong in Floks.
