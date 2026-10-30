@@ -8,29 +8,12 @@ import { useFrnlComponent } from '../src/react/useFrnlComponent.js';
 
 afterEach(cleanup);
 
+const phases = { sustainPhase: { visualDefinition: { parameters: {} } } };
 const buttonDefinition = defineFrnlComponent({
   name: 'button',
   states: {
-    idle: {
-      name: 'idle',
-      events: { click: { functionId: 'button.idle.click' } },
-      visualParameters: { opacity: 1 },
-      phases: {
-        attackPhase: { visualDefinition: { parameters: {} } },
-        sustainPhase: { visualDefinition: { parameters: {} } },
-        releasePhase: { visualDefinition: { parameters: {} } },
-      },
-    },
-    loading: {
-      name: 'loading',
-      events: { click: { functionId: 'button.loading.click' } },
-      visualParameters: { opacity: 0.5 },
-      phases: {
-        attackPhase: { visualDefinition: { parameters: {} } },
-        sustainPhase: { visualDefinition: { parameters: {} } },
-        releasePhase: { visualDefinition: { parameters: {} } },
-      },
-    },
+    idle: { name: 'idle', events: { click: { functionId: 'button.idle.click' } }, visualParameters: { opacity: 1 }, phases },
+    loading: { name: 'loading', events: { click: { functionId: 'button.loading.click' } }, visualParameters: { opacity: 0.5 }, phases },
   },
 });
 

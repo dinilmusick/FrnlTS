@@ -1,7 +1,7 @@
 import type { StoreApi } from 'zustand/vanilla';
 import type { FrnlComponentDefinition } from './component-definition.js';
 import { getFrnlVisualParameters, invokeFrnlEvent } from './events.js';
-import type { FrnlState } from './store.js';
+import type { FrnlState, FrnlEvent } from './store.js';
 
 export type FrnlFrontendApiOptions = {
   readonly applicationId?: string;
@@ -44,7 +44,7 @@ export type FrnlFrontendSnapshot = {
   readonly componentCount: number;
   readonly components: readonly FrnlComponentSnapshot[];
   readonly tree: readonly FrnlComponentSnapshot[];
-  readonly events: readonly FrnlState['events'];
+  readonly events: readonly FrnlEvent[];
   readonly libraries: readonly string[];
 };
 
@@ -97,30 +97,51 @@ function snapshotFor(
 ): FrnlComponentSnapshot {
   const current = store.getState();
   const entity = current.entities[componentId];
-  const definition = current.componentDefinitions[componentId];
+  const explicitDefinition = current.componentDefinitions[componentId];
 
-  if (!entity || !definition) {
+  if (!entity && !explicitDefinition) {
     throw new Error(`Unknown Frnl component: ${componentId}`);
   }
 
+  const isMounted = Boolean(entity);
+  const definition: FrnlComponentDefinition = explicitDefinition ?? {
+    name: typeof entity?.properties?.type === 'string' ? (entity.properties.type as string) : 'Component',
+    states: {
+      [entity?.state ?? 'default']: {
+        visualDefinition: { parameters: {} },
+        events: {},
+        phases: {
+          sustainPhase: { visualDefinition: { parameters: {} } },
+        },
+        visualParameters: {},
+      },
+    },
+  };
+
   const names = eventNames(definition);
   const controls: Record<string, FrnlComponentControl> = {};
+  const currentStateName = entity?.state ?? Object.keys(definition.states)[0] ?? 'default';
 
   for (const name of names) {
-    const eventDefinition = definition.states[entity.state]?.events[name];
+    const eventDefinition = definition.states[currentStateName]?.events[name];
+    const hasHandler = Boolean(eventDefinition && current.eventHandlers[componentId]?.[eventDefinition.functionId]);
     controls[name] = {
       id: name,
       kind: 'event',
-      available: Boolean(eventDefinition && current.eventHandlers[componentId]?.[eventDefinition.functionId]),
-      invoke: (payload) => invokeFrnlEvent(store, componentId, name, payload),
+      available: isMounted && hasHandler,
+      invoke: (payload) => {
+        if (!isMounted) throw new Error(`Frnl control unavailable: ${componentId}.${name} (component not mounted)`);
+        return invokeFrnlEvent(store, componentId, name, payload);
+      },
     };
   }
 
   controls.setState = {
     id: 'setState',
     kind: 'setState',
-    available: true,
+    available: isMounted,
     invoke: (payload) => {
+      if (!isMounted) throw new Error(`Frnl control unavailable: ${componentId}.setState (component not mounted)`);
       if (typeof payload !== 'string') throw new TypeError('setState expects a string payload');
       current.setEntityState(componentId, payload);
     },
@@ -129,8 +150,9 @@ function snapshotFor(
   controls.setVisualParameter = {
     id: 'setVisualParameter',
     kind: 'setVisualParameter',
-    available: true,
+    available: isMounted,
     invoke: (payload) => {
+      if (!isMounted) throw new Error(`Frnl control unavailable: ${componentId}.setVisualParameter (component not mounted)`);
       if (!payload || typeof payload !== 'object') {
         throw new TypeError('setVisualParameter expects { parameter, value }');
       }
@@ -145,8 +167,9 @@ function snapshotFor(
   controls.applyTheme = {
     id: 'applyTheme',
     kind: 'applyTheme',
-    available: Object.keys(current.themes).length > 0,
+    available: isMounted && Object.keys(current.themes).length > 0,
     invoke: (payload) => {
+      if (!isMounted) throw new Error(`Frnl control unavailable: ${componentId}.applyTheme (component not mounted)`);
       if (typeof payload !== 'string') throw new TypeError('applyTheme expects a theme name');
       current.applyTheme(componentId, payload);
     },
@@ -157,16 +180,16 @@ function snapshotFor(
     type: definition.name,
     path: Object.freeze(componentPath(store, componentId)),
     parentId: current.componentParents[componentId],
-    rendered: true,
+    rendered: isMounted,
     lifecycle: {
-      mounted: true,
-      rendered: true,
-      mountedAt,
-      renderedAt: mountedAt,
+      mounted: isMounted,
+      rendered: isMounted,
+      mountedAt: isMounted ? mountedAt : undefined,
+      renderedAt: isMounted ? mountedAt : undefined,
     },
-    state: entity.state,
-    properties: Object.freeze({ ...entity.properties }),
-    visualParameters: Object.freeze({ ...getFrnlVisualParameters(store, componentId) }),
+    state: currentStateName,
+    properties: Object.freeze({ ...(entity?.properties ?? {}) }),
+    visualParameters: Object.freeze({ ...(isMounted ? getFrnlVisualParameters(store, componentId) : {}) }),
     controls: Object.freeze(controls),
     events: Object.freeze(names),
     children: Object.freeze(childrenOf(store, componentId)),
@@ -194,8 +217,11 @@ export function createFrnlFrontendApi(
 
   const inspect = (): FrnlFrontendSnapshot => {
     const current = store.getState();
-    const components = Object.keys(current.entities)
-      .filter((id) => current.componentDefinitions[id])
+    const allIds = new Set<string>([
+      ...Object.keys(current.entities),
+      ...Object.keys(current.componentDefinitions),
+    ]);
+    const components = [...allIds]
       .sort()
       .map((id) => snapshotFor(store, id, mountedAt.get(id)));
 
@@ -237,9 +263,13 @@ export function installFrnlFrontendApi(
   globalKey = '__FRNL_FRONTEND_API__',
 ): void {
   if (typeof globalThis === 'undefined') return;
-  Object.defineProperty(globalThis, globalKey, {
-    configurable: true,
-    enumerable: false,
-    get: () => api,
-  });
+  try {
+    Object.defineProperty(globalThis, globalKey, {
+      configurable: true,
+      enumerable: false,
+      get: () => api,
+    });
+  } catch {
+    (globalThis as Record<string, unknown>)[globalKey] = api;
+  }
 }
