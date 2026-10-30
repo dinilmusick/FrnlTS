@@ -3,15 +3,6 @@ import { createFrnlStore } from '../src/runtime/store.js';
 import { createFrnlFrontendApi } from '../src/runtime/frontend-api.js';
 import { defineFrnlComponent } from '../src/runtime/component-definition.js';
 
-const definition = defineFrnlComponent({
-  name: 'Button',
-  states: {
-    default: {
-      visualDefinition: undefined,
-    } as never,
-  },
-});
-
 const buttonDefinition = defineFrnlComponent({
   name: 'Button',
   states: {
