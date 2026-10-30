@@ -1,7 +1,7 @@
 import type { StoreApi } from 'zustand/vanilla';
 import type { FrnlComponentDefinition } from './component-definition.js';
 import { getFrnlVisualParameters, invokeFrnlEvent } from './events.js';
-import type { EntityState, FrnlState } from './store.js';
+import type { FrnlState } from './store.js';
 
 export type FrnlFrontendApiOptions = {
   readonly applicationId?: string;
@@ -92,6 +92,7 @@ function childrenOf(store: StoreApi<FrnlState>, componentId: string): string[] {
 function snapshotFor(
   store: StoreApi<FrnlState>,
   componentId: string,
+  mountedAt: number | undefined,
 ): FrnlComponentSnapshot {
   const current = store.getState();
   const entity = current.entities[componentId];
@@ -140,7 +141,6 @@ function snapshotFor(
     },
   };
 
-  const theme = current.componentThemes[componentId];
   controls.applyTheme = {
     id: 'applyTheme',
     kind: 'applyTheme',
@@ -151,8 +151,6 @@ function snapshotFor(
     },
   };
 
-  const metadata = entity as EntityState & { mountedAt?: number; renderedAt?: number };
-
   return {
     id: componentId,
     type: definition.name,
@@ -162,8 +160,8 @@ function snapshotFor(
     lifecycle: {
       mounted: true,
       rendered: true,
-      mountedAt: metadata.mountedAt,
-      renderedAt: metadata.renderedAt,
+      mountedAt,
+      renderedAt: mountedAt,
     },
     state: entity.state,
     properties: Object.freeze({ ...entity.properties }),
@@ -178,14 +176,27 @@ export function createFrnlFrontendApi(
   store: StoreApi<FrnlState>,
   options: FrnlFrontendApiOptions = {},
 ): FrnlFrontendApi {
-  const inspectComponent = (componentId: string) => snapshotFor(store, componentId);
+  const mountedAt = new Map<string, number>();
+  for (const id of Object.keys(store.getState().entities)) mountedAt.set(id, Date.now());
+
+  const unsubscribe = store.subscribe((state) => {
+    const now = Date.now();
+    for (const id of Object.keys(state.entities)) {
+      if (!mountedAt.has(id)) mountedAt.set(id, now);
+    }
+    for (const id of [...mountedAt.keys()]) {
+      if (!state.entities[id]) mountedAt.delete(id);
+    }
+  });
+
+  const inspectComponent = (componentId: string) => snapshotFor(store, componentId, mountedAt.get(componentId));
 
   const inspect = (): FrnlFrontendSnapshot => {
     const current = store.getState();
     const components = Object.keys(current.entities)
       .filter((id) => current.componentDefinitions[id])
       .sort()
-      .map((id) => snapshotFor(store, id));
+      .map((id) => snapshotFor(store, id, mountedAt.get(id)));
 
     return {
       apiVersion: 1,
@@ -207,6 +218,8 @@ export function createFrnlFrontendApi(
     if (!control.available) throw new Error(`Frnl control unavailable: ${componentId}.${controlId}`);
     return control.invoke(payload);
   };
+
+  void unsubscribe;
 
   return Object.freeze({
     inspect,
