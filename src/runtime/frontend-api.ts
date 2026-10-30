@@ -56,6 +56,7 @@ export type FrnlFrontendApi = {
     readonly invoke: (controlId: string, payload?: unknown) => unknown | Promise<unknown>;
   };
   readonly invoke: (componentId: string, controlId: string, payload?: unknown) => unknown | Promise<unknown>;
+  readonly dispose: () => void;
 };
 
 function componentPath(store: StoreApi<FrnlState>, componentId: string): string[] {
@@ -219,8 +220,6 @@ export function createFrnlFrontendApi(
     return control.invoke(payload);
   };
 
-  void unsubscribe;
-
   return Object.freeze({
     inspect,
     inspectComponent,
@@ -229,6 +228,7 @@ export function createFrnlFrontendApi(
       invoke: (controlId, payload) => invoke(componentId, controlId, payload),
     }),
     invoke,
+    dispose: unsubscribe,
   });
 }
 
