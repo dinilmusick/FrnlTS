@@ -1,6 +1,6 @@
 {
   "name": "@ultrst-armada/frnlts",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "private": false,
   "type": "module",
   "description": "FrnlTS semantic frontend runtime, validation tooling, and CLI for React applications.",
