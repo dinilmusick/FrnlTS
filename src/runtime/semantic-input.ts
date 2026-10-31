@@ -20,6 +20,7 @@ export type {
   SemanticInputRisk,
   SemanticInputModelPolicy,
   SemanticInputProvenance,
+  SemanticInputProgress,
 };
 
 export type FrnlInputTransport = "text" | "voice" | "paste" | "programmatic";
