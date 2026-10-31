@@ -1,6 +1,6 @@
 {
   "name": "@ultrst-armada/frnlts",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "private": false,
   "type": "module",
   "description": "FrnlTS semantic frontend runtime, validation tooling, and CLI for React applications.",
@@ -51,7 +51,7 @@
     "watch": "node packages/cli/dist/bin/frnl.js watch"
   },
   "dependencies": {
-    "@dinilmusick/gutts": "^1.3.0",
+    "@dinilmusick/gutts": "^1.3.2",
     "typescript": "^5.7.3",
     "zod": "^3.25.0",
     "zustand": "^5.0.3"
