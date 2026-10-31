@@ -8,8 +8,10 @@ import {
   type SemanticInputRisk,
   type SemanticInputModelPolicy,
   type SemanticInputProvenance,
+  type SemanticInputProgress,
+  type SemanticInputEvent,
 } from "@dinilmusick/gutts";
-import {createContext, type ReactNode, useContext} from "react";
+import {createContext, createElement, type ReactNode, useContext} from "react";
 import {z} from "zod";
 
 export type {
@@ -21,6 +23,7 @@ export type {
   SemanticInputModelPolicy,
   SemanticInputProvenance,
   SemanticInputProgress,
+  SemanticInputEvent,
 };
 
 export type FrnlInputTransport = "text" | "voice" | "paste" | "programmatic";
@@ -95,10 +98,10 @@ export function FrnlSemanticContextProvider({
   children?: ReactNode;
 }) {
   const parent = useContext(FrnlSemanticContextValue);
-  return (
-    <FrnlSemanticContextValue.Provider value={mergeFrnlSemanticContext(parent, value)}>
-      {children}
-    </FrnlSemanticContextValue.Provider>
+  return createElement(
+    FrnlSemanticContextValue.Provider,
+    {value: mergeFrnlSemanticContext(parent, value)},
+    children,
   );
 }
 

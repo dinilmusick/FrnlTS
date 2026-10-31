@@ -14,6 +14,8 @@ import {
   createDefaultFrnlInputContract,
   createFrnlInputContract,
   compileFrnlSemanticFormSchema,
+  mergeFrnlSemanticContext,
+  resolveFrnlFormInput,
   resolveFrnlInput,
   type FrnlInputContract,
 } from "./semantic-input.js";
