@@ -6,6 +6,8 @@ import {
   type SemanticInputResolution,
   type SemanticInputSchema,
   type SemanticInputRisk,
+  type SemanticInputModelPolicy,
+  type SemanticInputProvenance,
 } from "@dinilmusick/gutts";
 import {createContext, type ReactNode, useContext} from "react";
 import {z} from "zod";
@@ -16,6 +18,8 @@ export type {
   SemanticInputResolution,
   SemanticInputSchema,
   SemanticInputRisk,
+  SemanticInputModelPolicy,
+  SemanticInputProvenance,
 };
 
 export type FrnlInputTransport = "text" | "voice" | "paste" | "programmatic";
@@ -55,10 +59,12 @@ export type FrnlInputContract<T> = {
   cache?: SemanticInputCache;
   signal?: AbortSignal;
   onEvent?: (event: import("@dinilmusick/gutts").SemanticInputEvent) => void;
+  modelPolicy?: SemanticInputModelPolicy;
 };
 
 export type FrnlResolvedInput<T> = SemanticInputResolution<T> & {
   validation?: z.SafeParseReturnType<unknown, T>;
+  provenance?: SemanticInputProvenance;
 };
 
 const FrnlSemanticContextValue = createContext<FrnlSemanticContext>({});
@@ -75,7 +81,7 @@ export function mergeFrnlSemanticContext(
     section: child.section ?? parent.section,
     form: child.form ?? parent.form,
     locale: child.locale ?? parent.locale,
-    fields: child.fields ?? parent.fields,
+    fields: child.fields ? [...(parent.fields ?? []), ...child.fields] : parent.fields,
   };
 }
 
@@ -143,6 +149,11 @@ export async function resolveFrnlInput<T>(
     cache: contract.cache,
     signal: contract.signal,
     onEvent: contract.onEvent,
+    policy: {
+      risk: contract.risk,
+      requireConfirmation: contract.requireConfirmation,
+      modelPolicy: contract.modelPolicy,
+    },
   });
 
   if (rawResolution.status !== "resolved" || rawResolution.value === undefined || rawResolution.value === null) {
@@ -180,6 +191,8 @@ export type FrnlSemanticFormContract<T> = {
   schema?: SemanticInputSchema;
   context?: FrnlSemanticContext;
   preserveRawInput?: boolean;
+  onEvent?: (event: import("@dinilmusick/gutts").SemanticInputEvent) => void;
+  modelPolicy?: SemanticInputModelPolicy;
 };
 
 export type FrnlResolvedForm<T> = {
@@ -194,16 +207,27 @@ export type FrnlResolvedForm<T> = {
   error?: FrnlResolvedInput<T>["error"];
 };
 
+export function compileFrnlSemanticFormSchema(
+  fields: Readonly<Record<string, FrnlInputContract<unknown>>>,
+): SemanticInputSchema {
+  return {
+    type: "object",
+    properties: Object.fromEntries(
+      Object.entries(fields).map(([name, field]) => [
+        name,
+        {...field.schema, description: field.description ?? field.label},
+      ]),
+    ),
+    required: Object.keys(fields),
+  };
+}
+
 export async function resolveFrnlFormInput<T>(
   contract: FrnlSemanticFormContract<T>,
   input: string,
 ): Promise<FrnlResolvedForm<T>> {
   const fieldEntries = Object.entries(contract.fields);
-  const schema = contract.schema ?? {
-    type: "object",
-    properties: Object.fromEntries(fieldEntries.map(([name, field]) => [name, field.schema])),
-    required: fieldEntries.map(([name]) => name),
-  };
+  const schema = contract.schema ?? compileFrnlSemanticFormSchema(contract.fields);
 
   const raw = await resolveSemanticInput<unknown>({
     input,
@@ -220,6 +244,7 @@ export async function resolveFrnlFormInput<T>(
       constraints: fieldEntries.flatMap(([, field]) => field.constraints ?? []),
     },
     preserveRawInput: contract.preserveRawInput ?? false,
+    modelPolicy: contract.modelPolicy,
   });
 
   if (raw.status !== "resolved" || raw.value === undefined || raw.value === null || typeof raw.value !== "object") {
