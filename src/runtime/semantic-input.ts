@@ -4,6 +4,7 @@ import {
   type SemanticInputSchema,
   type SemanticInputResolution,
 } from "@dinilmusick/gutts";
+import {createContext, useContext} from "react";
 import {z} from "zod";
 
 export type FrnlInputTransport = "text" | "voice" | "paste" | "programmatic";
@@ -64,4 +65,19 @@ export function createFrnlInputContract<T>(
     transports: Object.freeze(contract.transports ?? ["text"]),
     preserveRawInput: contract.preserveRawInput ?? false,
   });
+}
+
+export type FrnlSemanticContext = {
+  page?: string;
+  section?: string;
+  application?: string;
+  workspace?: string;
+};
+
+const FrnlSemanticContextValue = createContext<FrnlSemanticContext>({});
+
+export const FrnlSemanticInputProvider = FrnlSemanticContextValue.Provider;
+
+export function useFrnlSemanticInputContext(): FrnlSemanticContext {
+  return useContext(FrnlSemanticContextValue);
 }
