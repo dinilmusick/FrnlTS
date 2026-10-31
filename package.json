@@ -51,7 +51,7 @@
     "watch": "node packages/cli/dist/bin/frnl.js watch"
   },
   "dependencies": {
-    "@dinilmusick/gutts": "^1.1.0",
+    "@dinilmusick/gutts": "^1.2.0",
     "typescript": "^5.7.3",
     "zod": "^3.25.0",
     "zustand": "^5.0.3"
