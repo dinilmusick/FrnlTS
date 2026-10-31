@@ -365,4 +365,55 @@ describe("FrnlTS universal semantic input", () => {
     expect(result.value).toBe("May");
     expect(result.candidates[0]?.value).toBe("May");
   });
+  it("14. nested semantic contexts inherit and override parent scope", () => {
+    const parent = {
+      application: "registry",
+      page: "users",
+      section: "profile",
+      form: "identity",
+      locale: "en-IN",
+    };
+    const merged = mergeFrnlSemanticContext(parent, {
+      section: "address",
+      form: "address",
+    });
+    expect(merged.application).toBe("registry");
+    expect(merged.page).toBe("users");
+    expect(merged.section).toBe("address");
+    expect(merged.form).toBe("address");
+    expect(merged.locale).toBe("en-IN");
+  });
+
+  it("15. form resolution uses one schema and validates every field", async () => {
+    resolveSemanticInputMock.mockResolvedValueOnce({
+      status: "resolved",
+      value: {name: "Monke", age: 32},
+      candidates: [],
+      modelOutput: {name: "Monke", age: 32},
+    });
+
+    const result = await resolveFrnlFormInput({
+      fields: {
+        name: {
+          name: "name",
+          label: "Name",
+          schema: {type: "string"},
+          validator: z.string().min(1),
+        },
+        age: {
+          name: "age",
+          label: "Age",
+          schema: {type: "integer"},
+          validator: z.number().int().nonnegative(),
+        },
+      },
+      validator: z.object({name: z.string(), age: z.number().int()}),
+    }, "Monke is 32");
+
+    expect(result.status).toBe("resolved");
+    expect(result.value).toEqual({name: "Monke", age: 32});
+    expect(result.fields.name?.value).toBe("Monke");
+    expect(result.fields.age?.value).toBe(32);
+  });
+
 });
