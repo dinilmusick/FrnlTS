@@ -1,6 +1,6 @@
 import {
-  rankSemanticInputCandidates,
   resolveSemanticInput,
+  SemanticInputCache,
   type SemanticInputCandidate,
   type SemanticInputContext,
   type SemanticInputResolution,
@@ -52,6 +52,8 @@ export type FrnlInputContract<T> = {
   constraints?: readonly string[];
   risk?: SemanticInputRisk;
   requireConfirmation?: boolean;
+  cache?: SemanticInputCache;
+  signal?: AbortSignal;
 };
 
 export type FrnlResolvedInput<T> = SemanticInputResolution<T> & {
@@ -137,6 +139,8 @@ export async function resolveFrnlInput<T>(
       risk: contract.risk,
       requireConfirmation: contract.requireConfirmation,
     },
+    cache: contract.cache,
+    signal: contract.signal,
   });
 
   if (rawResolution.status !== "resolved" || rawResolution.value === undefined || rawResolution.value === null) {
@@ -196,7 +200,7 @@ export async function resolveFrnlFormInput<T>(
   const schema = contract.schema ?? {
     type: "object",
     properties: Object.fromEntries(fieldEntries.map(([name, field]) => [name, field.schema])),
-    required: fieldEntries.filter(([, field]) => field.schema.required?.includes(name)).map(([name]) => name),
+    required: fieldEntries.map(([name]) => name),
   };
 
   const raw = await resolveSemanticInput<unknown>({
