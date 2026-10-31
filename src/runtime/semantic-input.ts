@@ -54,6 +54,7 @@ export type FrnlInputContract<T> = {
   requireConfirmation?: boolean;
   cache?: SemanticInputCache;
   signal?: AbortSignal;
+  onEvent?: (event: import("@dinilmusick/gutts").SemanticInputEvent) => void;
 };
 
 export type FrnlResolvedInput<T> = SemanticInputResolution<T> & {
@@ -141,6 +142,7 @@ export async function resolveFrnlInput<T>(
     },
     cache: contract.cache,
     signal: contract.signal,
+    onEvent: contract.onEvent,
   });
 
   if (rawResolution.status !== "resolved" || rawResolution.value === undefined || rawResolution.value === null) {
