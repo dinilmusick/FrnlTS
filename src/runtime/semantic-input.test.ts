@@ -11,12 +11,26 @@ vi.mock("@dinilmusick/gutts", () => ({
 }));
 
 import {
+  createDefaultFrnlInputContract,
   createFrnlInputContract,
   resolveFrnlInput,
   type FrnlInputContract,
 } from "./semantic-input.js";
 
 describe("FrnlTS universal semantic input", () => {
+  it("covers canonical input types with framework-owned default semantic contracts", () => {
+    const text = createDefaultFrnlInputContract({name: "notes", label: "Notes", inputType: "text"});
+    const email = createDefaultFrnlInputContract({name: "email", label: "Email", inputType: "email"});
+    const number = createDefaultFrnlInputContract({name: "count", label: "Count", inputType: "number"});
+    const date = createDefaultFrnlInputContract({name: "dob", label: "Date of Birth", inputType: "date"});
+
+    expect(text?.schema).toEqual({type: "string"});
+    expect(email?.semanticType).toBe("email");
+    expect(number?.schema).toEqual({type: "number"});
+    expect(date?.schema).toEqual({type: "string", format: "date"});
+    expect(createDefaultFrnlInputContract({name: "secret", label: "Secret", inputType: "password"})).toBeUndefined();
+  });
+
   beforeEach(() => {
     vi.resetAllMocks();
   });

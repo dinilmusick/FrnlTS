@@ -108,6 +108,107 @@ export async function resolveFrnlInput<T>(
   };
 }
 
+
+export function createDefaultFrnlInputContract(
+  input: {
+    name: string;
+    label: string;
+    description?: string;
+    inputType?: string;
+    context?: FrnlSemanticContext;
+  },
+): FrnlInputContract<unknown> | undefined {
+  const inputType = input.inputType ?? "text";
+
+  switch (inputType) {
+    case "number":
+    case "range":
+      return createFrnlInputContract({
+        name: input.name,
+        label: input.label,
+        description: input.description,
+        semanticType: "number",
+        schema: {type: "number"},
+        validator: z.number().finite(),
+        context: input.context,
+      });
+    case "email":
+      return createFrnlInputContract({
+        name: input.name,
+        label: input.label,
+        description: input.description,
+        semanticType: "email",
+        schema: {type: "string", format: "email"},
+        validator: z.string().email(),
+        context: input.context,
+      });
+    case "url":
+      return createFrnlInputContract({
+        name: input.name,
+        label: input.label,
+        description: input.description,
+        semanticType: "url",
+        schema: {type: "string", format: "uri"},
+        validator: z.string().url(),
+        context: input.context,
+      });
+    case "date":
+      return createFrnlInputContract({
+        name: input.name,
+        label: input.label,
+        description: input.description,
+        semanticType: "date",
+        schema: {type: "string", format: "date"},
+        validator: z.string().refine((value) => !Number.isNaN(Date.parse(value)), "Invalid date"),
+        context: input.context,
+      });
+    case "datetime-local":
+      return createFrnlInputContract({
+        name: input.name,
+        label: input.label,
+        description: input.description,
+        semanticType: "datetime",
+        schema: {type: "string", format: "date-time"},
+        validator: z.string().refine((value) => !Number.isNaN(Date.parse(value)), "Invalid date-time"),
+        context: input.context,
+      });
+    case "month":
+      return createFrnlInputContract({
+        name: input.name,
+        label: input.label,
+        description: input.description,
+        semanticType: "month",
+        schema: {type: "string", pattern: "^\\d{4}-\\d{2}$"},
+        validator: z.string().regex(/^\\d{4}-\\d{2}$/),
+        context: input.context,
+      });
+    case "time":
+      return createFrnlInputContract({
+        name: input.name,
+        label: input.label,
+        description: input.description,
+        semanticType: "time",
+        schema: {type: "string", pattern: "^\\d{2}:\\d{2}(:\\d{2})?$"},
+        validator: z.string().regex(/^\\d{2}:\\d{2}(:\\d{2})?$/),
+        context: input.context,
+      });
+    case "text":
+    case "search":
+    case "tel":
+    default:
+      if (!["text", "search", "tel"].includes(inputType)) return undefined;
+      return createFrnlInputContract({
+        name: input.name,
+        label: input.label,
+        description: input.description,
+        semanticType: inputType,
+        schema: {type: "string"},
+        validator: z.string(),
+        context: input.context,
+      });
+  }
+}
+
 export function createFrnlInputContract<T>(
   contract: FrnlInputContract<T>,
 ): FrnlInputContract<T> {
