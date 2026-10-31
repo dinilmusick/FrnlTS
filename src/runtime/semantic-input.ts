@@ -205,6 +205,7 @@ export type FrnlResolvedForm<T> = {
   clarification?: FrnlResolvedInput<T>["clarification"];
   evidence?: FrnlResolvedInput<T>["evidence"];
   error?: FrnlResolvedInput<T>["error"];
+  provenance?: SemanticInputProvenance;
 };
 
 export function compileFrnlSemanticFormSchema(
@@ -257,6 +258,7 @@ export async function resolveFrnlFormInput<T>(
       ...(raw.clarification ? {clarification: raw.clarification} : {}),
       ...(raw.evidence ? {evidence: raw.evidence} : {}),
       ...(raw.error ? {error: raw.error} : {}),
+      ...(raw.provenance ? {provenance: raw.provenance} : {}),
     };
   }
 
@@ -296,6 +298,7 @@ export async function resolveFrnlFormInput<T>(
       candidates: raw.candidates,
       evidence: raw.evidence,
       error: {code: "SCHEMA_MISMATCH", message: "Resolved form data failed validation."},
+      ...(raw.provenance ? {provenance: raw.provenance} : {}),
     };
   }
 
@@ -307,6 +310,7 @@ export async function resolveFrnlFormInput<T>(
     modelOutput: raw.modelOutput,
     candidates: raw.candidates,
     evidence: raw.evidence,
+    ...(raw.provenance ? {provenance: raw.provenance} : {}),
   };
 }
 
