@@ -416,4 +416,50 @@ describe("FrnlTS universal semantic input", () => {
     expect(result.fields.age?.value).toBe(32);
   });
 
+  it("11. compiles a semantic form schema from canonical field contracts", () => {
+    const schema = compileFrnlSemanticFormSchema({
+      name: {
+        name: "name",
+        label: "Name",
+        description: "Person name",
+        schema: {type: "string"},
+        validator: z.string(),
+      },
+      age: {
+        name: "age",
+        label: "Age",
+        schema: {type: "integer"},
+        validator: z.number().int(),
+      },
+    });
+    expect(schema.properties?.name).toMatchObject({type: "string", description: "Person name"});
+    expect(schema.properties?.age).toMatchObject({type: "integer", description: "Age"});
+    expect(schema.required).toEqual(["name", "age"]);
+  });
+
+  it("12. forwards model policy and progressive callbacks", async () => {
+    resolveSemanticInputMock.mockResolvedValueOnce({
+      status: "resolved",
+      value: 42,
+      candidates: [],
+      modelOutput: 42,
+      provenance: {resolver: "GutTS.semantic-input", requestFingerprint: "x", modelPolicy: "accurate", models: ["Needle3", "MiniLM", "EttinReranker68M"], deterministic: false},
+    });
+    const progress = vi.fn();
+    const contract: FrnlInputContract<number> = {
+      name: "age",
+      label: "Age",
+      schema: {type: "integer"},
+      validator: z.number().int(),
+      modelPolicy: "accurate",
+      onProgress: progress,
+    };
+    const result = await resolveFrnlInput(contract, "forty two");
+    expect(result.provenance?.modelPolicy).toBe("accurate");
+    expect(resolveSemanticInputMock).toHaveBeenCalledWith(expect.objectContaining({
+      policy: expect.objectContaining({modelPolicy: "accurate"}),
+      onProgress: progress,
+    }));
+  });
+
 });
