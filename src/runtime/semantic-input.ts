@@ -2,12 +2,46 @@ import {
   EttinReranker17M,
   MiniLM,
   Needle3,
-  type SemanticInputSchema,
-  type SemanticInputContext,
-  type SemanticInputResolution,
 } from "@dinilmusick/gutts";
 import {createContext, useContext} from "react";
 import {z} from "zod";
+
+export type SemanticInputSchema = {
+  type: string;
+  properties?: Record<string, SemanticInputSchema>;
+  required?: readonly string[];
+  enum?: readonly unknown[];
+  items?: SemanticInputSchema;
+  description?: string;
+  [key: string]: unknown;
+};
+
+export type SemanticInputContext = {
+  page?: string;
+  section?: string;
+  field?: string;
+  label?: string;
+  description?: string;
+  semanticType?: string;
+  vocabulary?: readonly string[];
+  examples?: readonly string[];
+  constraints?: readonly string[];
+};
+
+export type SemanticInputCandidate = {
+  value: string;
+  similarity?: number;
+  relevance?: number;
+};
+
+export type SemanticInputResolution<T = unknown> = {
+  status: "resolved" | "ambiguous" | "invalid";
+  value?: T;
+  rawInput?: string;
+  candidates: readonly SemanticInputCandidate[];
+  modelOutput: unknown;
+};
+
 
 export type FrnlInputTransport = "text" | "voice" | "paste" | "programmatic";
 
