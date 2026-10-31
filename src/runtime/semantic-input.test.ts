@@ -13,6 +13,7 @@ vi.mock("@dinilmusick/gutts", () => ({
 import {
   createDefaultFrnlInputContract,
   createFrnlInputContract,
+  compileFrnlSemanticFormSchema,
   resolveFrnlInput,
   type FrnlInputContract,
 } from "./semantic-input.js";
