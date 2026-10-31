@@ -1,7 +1,9 @@
 import {
-  resolveSemanticInput,
-  type SemanticInputContext,
+  EttinReranker17M,
+  MiniLM,
+  Needle3,
   type SemanticInputSchema,
+  type SemanticInputContext,
   type SemanticInputResolution,
 } from "@dinilmusick/gutts";
 import {createContext, useContext} from "react";
@@ -23,6 +25,21 @@ export type FrnlInputContract<T> = {
   examples?: readonly string[];
 };
 
+async function rankCandidates(input: string, candidates: readonly string[]) {
+  const similarity = new MiniLM();
+  const reranker = new EttinReranker17M();
+  const similarities = await Promise.all(candidates.map((candidate) => similarity.similarity({left: input, right: candidate})));
+  const relevance = await reranker.rerank({query: input, candidates});
+  return candidates.map((value, index) => ({value, similarity: similarities[index], relevance: relevance[index]}))
+    .sort((a, b) => (b.relevance ?? -Infinity) - (a.relevance ?? -Infinity));
+}
+
+function unwrap(output: unknown): unknown {
+  if (!output || typeof output !== "object") return output;
+  const value = output as Record<string, unknown>;
+  return value.output ?? value.result ?? value.data ?? value.structuredOutput ?? output;
+}
+
 export type FrnlResolvedInput<T> = SemanticInputResolution<T> & {
   validation?: z.SafeParseReturnType<unknown, T>;
 };
@@ -31,21 +48,36 @@ export async function resolveFrnlInput<T>(
   contract: FrnlInputContract<T>,
   input: string,
 ): Promise<FrnlResolvedInput<T>> {
-  const resolution = await resolveSemanticInput<T>({
-    input,
+  const context = {
+    ...contract.context,
+    field: contract.name,
+    label: contract.label,
+    description: contract.description,
+    semanticType: contract.semanticType,
+    vocabulary: contract.vocabulary,
+    examples: contract.examples,
+  };
+  const needle = new Needle3();
+  const modelOutput = await needle.complete({
+    prompt: [
+      "Convert the natural-language input into the target schema.",
+      "Use only information supported by the input and context.",
+      JSON.stringify(context),
+      JSON.stringify(input),
+    ].join("\\n"),
     schema: contract.schema,
-    context: {
-      ...contract.context,
-      field: contract.name,
-      label: contract.label,
-      description: contract.description,
-      semanticType: contract.semanticType,
-      vocabulary: contract.vocabulary,
-      examples: contract.examples,
-    },
-    candidates: contract.vocabulary,
-    preserveRawInput: contract.preserveRawInput ?? false,
   });
+  const candidates = contract.vocabulary?.length
+    ? await rankCandidates(input, contract.vocabulary)
+    : [];
+  const value = unwrap(modelOutput);
+  const resolution: SemanticInputResolution<T> = {
+    status: value === undefined || value === null ? "invalid" : "resolved",
+    value: value as T,
+    candidates,
+    modelOutput,
+    ...(contract.preserveRawInput ? {rawInput: input} : {}),
+  };
 
   if (resolution.status !== "resolved") return resolution;
 
