@@ -142,10 +142,6 @@ export async function resolveFrnlInput<T>(
     context: mergedContext,
     candidates: contract.vocabulary,
     preserveRawInput: contract.preserveRawInput ?? false,
-    policy: {
-      risk: contract.risk,
-      requireConfirmation: contract.requireConfirmation,
-    },
     cache: contract.cache,
     signal: contract.signal,
     onEvent: contract.onEvent,
@@ -244,7 +240,7 @@ export async function resolveFrnlFormInput<T>(
       constraints: fieldEntries.flatMap(([, field]) => field.constraints ?? []),
     },
     preserveRawInput: contract.preserveRawInput ?? false,
-    modelPolicy: contract.modelPolicy,
+    policy: {modelPolicy: contract.modelPolicy},
   });
 
   if (raw.status !== "resolved" || raw.value === undefined || raw.value === null || typeof raw.value !== "object") {
