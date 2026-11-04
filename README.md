@@ -93,3 +93,6 @@ pnpm run validate
 ```
 
 Concrete UI components remain ordinary React code and belong in Floks.
+
+
+<!-- Canonical auth dependency baseline: GutTS 1.4.3 -->
