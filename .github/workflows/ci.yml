@@ -39,7 +39,7 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --force --no-frozen-lockfile
 
       # Workspace packages expose dist/ entry points used by typechecking and tests.
       - name: Build packages
