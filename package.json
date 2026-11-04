@@ -87,9 +87,6 @@
     "packages/*"
   ],
   "pnpm": {
-    "overrides": {
-      "@dinilmusick/gutts": "^1.4.3"
-    },
     "onlyBuiltDependencies": [
       "@dinilmusick/gutts"
     ]
