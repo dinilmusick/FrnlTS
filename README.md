@@ -98,3 +98,5 @@ Concrete UI components remain ordinary React code and belong in Floks.
 <!-- Canonical auth dependency baseline: GutTS 1.4.3 -->
 
 <!-- GutTS 1.4.3 registry propagation check 2026-11-04 -->
+
+<!-- auth consolidation retry 1793797407176 -->
