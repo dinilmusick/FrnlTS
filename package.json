@@ -1,6 +1,6 @@
 {
   "name": "@ultrst-armada/frnlts",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "private": false,
   "type": "module",
   "description": "FrnlTS semantic frontend runtime, validation tooling, and CLI for React applications; canonical authentication integration is supplied by GutTS.",
@@ -51,7 +51,7 @@
     "watch": "node packages/cli/dist/bin/frnl.js watch"
   },
   "dependencies": {
-    "@dinilmusick/gutts": "git+https://github.com/dinilmusick/GutTS.git#2ccc70f0026e77ef85717c6fb8696c23a6779499",
+    "@dinilmusick/gutts": "^1.4.3",
     "typescript": "^5.7.3",
     "zod": "^3.25.0",
     "zustand": "^5.0.3"
@@ -88,7 +88,7 @@
   ],
   "pnpm": {
     "overrides": {
-      "@dinilmusick/gutts": "git+https://github.com/dinilmusick/GutTS.git#2ccc70f0026e77ef85717c6fb8696c23a6779499"
+      "@dinilmusick/gutts": "^1.4.3"
     },
     "onlyBuiltDependencies": [
       "@dinilmusick/gutts"
