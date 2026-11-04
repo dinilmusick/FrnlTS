@@ -1712,7 +1712,7 @@ snapshots:
   '@csstools/css-tokenizer@4.0.2':
     optional: true
 
-  '@dinilmusick/gutts@1.4.1(@types/node@26.6.5)':
+  '@dinilmusick/gutts@1.4.3(@types/node@26.6.5)':
     dependencies:
       '@huggingface/transformers': 4.3.2(@types/node@26.6.5)
       cactus-needle: 0.3.0
