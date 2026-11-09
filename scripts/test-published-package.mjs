@@ -10,6 +10,20 @@ const packageName = sourceManifest.name;
 const version = sourceManifest.version;
 assert.ok(packageName && version, 'package name and version are required for registry verification');
 
+const isPullRequest = process.env.GITHUB_EVENT_NAME === 'pull_request';
+if (isPullRequest) {
+  try {
+    execFileSync('npm', ['view', packageName + '@' + version, 'version'], { stdio: 'ignore' });
+  } catch (error) {
+    const stderr = String(error.stderr ?? error.message ?? '');
+    if (/E404|ETARGET|notarget|No matching version/i.test(stderr)) {
+      console.log(`Skipping registry artifact verification for unpublished PR version ${packageName}@${version}; the local package smoke tests validate this PR build.`);
+      process.exit(0);
+    }
+    throw error;
+  }
+}
+
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'published-package-boundary-'));
 const packDir = path.join(temp, 'pack');
 const consumerDir = path.join(temp, 'consumer');
