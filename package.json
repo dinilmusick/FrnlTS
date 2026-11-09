@@ -48,10 +48,13 @@
     "typecheck": "pnpm --filter @ultrst-armada/frnlts-validate run build && pnpm -r run typecheck && tsc --noEmit",
     "validate": "node packages/cli/dist/bin/frnl.js validate",
     "dev": "node packages/cli/dist/bin/frnl.js dev",
-    "watch": "node packages/cli/dist/bin/frnl.js watch"
+    "watch": "node packages/cli/dist/bin/frnl.js watch",
+    "boundary": "node scripts/architecture-boundary.mjs",
+    "boundary:clean-room": "node scripts/clean-room-boundary.mjs",
+    "boundary:relative": "node scripts/relative-package-boundary.mjs"
   },
   "dependencies": {
-    "@dinilmusick/gutts": "^2.0.0",
+    "@dinilmusick/gutts": "^2.0.2",
     "typescript": "^5.7.3",
     "zod": "^3.25.0",
     "zustand": "^5.0.3"
