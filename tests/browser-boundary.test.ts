@@ -14,7 +14,7 @@ describe("FrnlTS browser dependency boundary", () => {
 
   it("declares GutTS 2.x, which contains the explicit browser/server split", () => {
     const manifest = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-    expect(manifest.dependencies?.["@dinilmusick/gutts"]).toBe("^2.0.0");
+    expect(manifest.dependencies?.["@dinilmusick/gutts"]).toBe("^2.0.2");
   });
 
   it("keeps the built public root free of server-only dependency references", () => {
