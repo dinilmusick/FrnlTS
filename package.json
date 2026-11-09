@@ -49,7 +49,8 @@
     "validate": "node packages/cli/dist/bin/frnl.js validate",
     "dev": "node packages/cli/dist/bin/frnl.js dev",
     "watch": "node packages/cli/dist/bin/frnl.js watch",
-    "boundary": "node scripts/architecture-boundary.mjs"
+    "boundary": "node scripts/architecture-boundary.mjs",
+    "boundary:clean-room": "node scripts/clean-room-boundary.mjs"
   },
   "dependencies": {
     "@dinilmusick/gutts": "^2.0.0",
