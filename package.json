@@ -51,7 +51,7 @@
     "watch": "node packages/cli/dist/bin/frnl.js watch"
   },
   "dependencies": {
-    "@dinilmusick/gutts": "^1.4.3",
+    "@dinilmusick/gutts": "^2.0.0",
     "typescript": "^5.7.3",
     "zod": "^3.25.0",
     "zustand": "^5.0.3"
@@ -61,7 +61,7 @@
     "@testing-library/react": "^16.3.3",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "happy-dom": "^21.0.3",
+    "happy-dom": "^21.0.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "tsup": "^8.4.0",
