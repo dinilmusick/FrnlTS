@@ -44,7 +44,7 @@
   },
   "scripts": {
     "build": "pnpm -r run build && tsup src/index.ts src/react/index.ts src/runtime/index.ts --format esm --dts --clean --external react --external react-dom",
-    "test": "pnpm -r run test && vitest run",
+    "test": "pnpm build && pnpm -r run test && vitest run",
     "typecheck": "pnpm --filter @ultrst-armada/frnlts-validate run build && pnpm -r run typecheck && tsc --noEmit",
     "validate": "node packages/cli/dist/bin/frnl.js validate",
     "dev": "node packages/cli/dist/bin/frnl.js dev",
