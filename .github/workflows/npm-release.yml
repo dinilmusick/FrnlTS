@@ -79,14 +79,13 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Refresh lockfile after upstream dependency changes
+        if: github.event_name == 'schedule' && steps.updates.outputs.changed == 'true'
+        run: pnpm install --lockfile-only --no-frozen-lockfile
+
       - name: Install dependencies
         if: github.event_name != 'schedule' || steps.updates.outputs.changed == 'true'
-        run: |
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            pnpm install --no-frozen-lockfile
-          else
-            pnpm install --frozen-lockfile
-          fi
+        run: pnpm install --frozen-lockfile
 
       - name: Build
         if: github.event_name != 'schedule' || steps.updates.outputs.changed == 'true'
@@ -157,6 +156,10 @@ jobs:
       - name: Publish to npm using Trusted Publishing
         if: (github.event_name == 'workflow_run' || github.event_name == 'release' || (github.event_name == 'schedule' && steps.updates.outputs.changed == 'true') || (github.event_name == 'workflow_dispatch' && inputs.publish)) && steps.registry.outputs.exists == 'false'
         run: npm publish --access public
+
+      - name: Verify published npm artifact
+        if: success() && (github.event_name == 'workflow_run' || github.event_name == 'release' || (github.event_name == 'schedule' && steps.updates.outputs.changed == 'true') || (github.event_name == 'workflow_dispatch' && inputs.publish))
+        run: pnpm run test:published
       - name: Notify Skipo after successful upstream publication
         if: success() && steps.registry.outputs.exists == 'false' && (github.event_name == 'workflow_run' || github.event_name == 'release' || (github.event_name == 'schedule' && steps.updates.outputs.changed == 'true') || (github.event_name == 'workflow_dispatch' && inputs.publish))
         env:
