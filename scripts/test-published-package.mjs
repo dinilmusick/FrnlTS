@@ -33,7 +33,17 @@ fs.mkdirSync(consumerDir);
 fs.mkdirSync(unpackedDir);
 
 try {
-  const packedJson = execFileSync('npm', ['pack', `${packageName}@${version}`, '--json', '--pack-destination', packDir], { encoding: 'utf8' });
+  let packedJson;
+  for (let attempt = 1; attempt <= 6; attempt++) {
+    try {
+      packedJson = execFileSync('npm', ['pack', `${packageName}@${version}`, '--json', '--pack-destination', packDir], { encoding: 'utf8' });
+      break;
+    } catch (error) {
+      if (attempt === 6) throw error;
+      console.log(`Waiting for ${packageName}@${version} to become available on npm (attempt ${attempt}/6)...`);
+      execFileSync('sleep', ['5']);
+    }
+  }
   const packed = JSON.parse(packedJson);
   assert.ok(packed[0]?.filename, 'npm pack must return the published tarball filename');
   const tarball = path.join(packDir, packed[0].filename);
