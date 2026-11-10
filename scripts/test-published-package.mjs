@@ -34,14 +34,15 @@ fs.mkdirSync(unpackedDir);
 
 try {
   let packedJson;
-  for (let attempt = 1; attempt <= 6; attempt++) {
+  for (let attempt = 1; attempt <= 20; attempt++) {
     try {
+      execFileSync('npm', ['view', `${packageName}@${version}`, 'version'], { stdio: 'ignore' });
       packedJson = execFileSync('npm', ['pack', `${packageName}@${version}`, '--json', '--pack-destination', packDir], { encoding: 'utf8' });
       break;
     } catch (error) {
-      if (attempt === 6) throw error;
-      console.log(`Waiting for ${packageName}@${version} to become available on npm (attempt ${attempt}/6)...`);
-      execFileSync('sleep', ['5']);
+      if (attempt === 20) throw error;
+      console.log(`Waiting for ${packageName}@${version} to finish processing on npm (attempt ${attempt}/20)...`);
+      execFileSync('sleep', ['10']);
     }
   }
   const packed = JSON.parse(packedJson);
