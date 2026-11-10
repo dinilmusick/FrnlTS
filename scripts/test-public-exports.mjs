@@ -58,8 +58,8 @@ if (pkg.name === '@ultrst-armada/frnlts') {
   assert.ok(pkg.devDependencies?.typescript, 'TypeScript must remain available to build and type-check FrnlTS');
 
   const lockfile = fs.readFileSync(path.join(root, 'pnpm-lock.yaml'), 'utf8');
-  const importerStart = lockfile.indexOf('  .:\n');
-  const importerEnd = lockfile.indexOf('\n  packages/cli:', importerStart);
+  const importerStart = lockfile.indexOf('  .:');
+  const importerEnd = lockfile.indexOf('  packages/cli:', importerStart);
   assert.ok(importerStart >= 0 && importerEnd > importerStart, 'Root pnpm importer must exist');
   const rootImporter = lockfile.slice(importerStart, importerEnd);
   const [production, development = ''] = rootImporter.split('    devDependencies:');
