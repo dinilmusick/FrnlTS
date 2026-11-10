@@ -53,9 +53,10 @@ if (pkg.name === '@ultrst-armada/krnl') {
     'KrnlTS core and root must use the same supported GutTS release range');
 }
 if (pkg.name === '@ultrst-armada/frnlts') {
-  assert.equal(pkg.dependencies?.typescript, undefined,
-    'TypeScript compiler tooling must not be a root production dependency');
-  assert.ok(pkg.devDependencies?.typescript, 'TypeScript must remain available to build and type-check FrnlTS');
+  assert.ok(pkg.dependencies?.typescript,
+    'The public /validate entry point uses ts-morph and requires TypeScript at runtime');
+  assert.equal(pkg.devDependencies?.typescript, undefined,
+    'TypeScript must have one canonical root dependency declaration');
 
   const lockfile = fs.readFileSync(path.join(root, 'pnpm-lock.yaml'), 'utf8');
   const importerStart = lockfile.indexOf('  .:');
@@ -63,10 +64,10 @@ if (pkg.name === '@ultrst-armada/frnlts') {
   assert.ok(importerStart >= 0 && importerEnd > importerStart, 'Root pnpm importer must exist');
   const rootImporter = lockfile.slice(importerStart, importerEnd);
   const [production, development = ''] = rootImporter.split('    devDependencies:');
-  assert.doesNotMatch(production, /^      typescript:/m,
-    'TypeScript must not be installed as a root production dependency in the lockfile');
-  assert.match(development, /^      typescript:/m,
-    'Root lockfile must retain TypeScript as a development dependency');
+  assert.match(production, /^      typescript:/m,
+    'Root lockfile must install TypeScript for the public /validate runtime entry point');
+  assert.doesNotMatch(development, /^      typescript:/m,
+    'TypeScript must not be redundantly declared as a root development dependency');
 }
 if (pkg.name === '@dinilmusick/gutts') {
   const higherLevel = Object.keys({ ...pkg.dependencies, ...pkg.optionalDependencies, ...pkg.peerDependencies })
