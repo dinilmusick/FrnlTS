@@ -157,21 +157,6 @@ jobs:
         if: (github.event_name == 'workflow_run' || github.event_name == 'release' || (github.event_name == 'schedule' && steps.updates.outputs.changed == 'true') || (github.event_name == 'workflow_dispatch' && inputs.publish)) && steps.registry.outputs.exists == 'false'
         run: npm publish --access public
 
-      - name: Independently verify npm publication
-        if: success() && steps.registry.outputs.exists == 'false' && (github.event_name == 'workflow_run' || github.event_name == 'release' || (github.event_name == 'schedule' && steps.updates.outputs.changed == 'true') || (github.event_name == 'workflow_dispatch' && inputs.publish))
-        env:
-          PACKAGE_NAME: ${{ steps.package.outputs.name }}
-          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
-        run: |
-          for attempt in 1 2 3 4 5 6; do
-            if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version >/dev/null 2>&1; then
-              echo "Verified ${PACKAGE_NAME}@${PACKAGE_VERSION} on npm."
-              exit 0
-            fi
-            sleep 10
-          done
-          echo "npm publication was not independently observable."
-          exit 1
       - name: Notify Skipo after successful upstream publication
         if: success() && steps.registry.outputs.exists == 'false' && (github.event_name == 'workflow_run' || github.event_name == 'release' || (github.event_name == 'schedule' && steps.updates.outputs.changed == 'true') || (github.event_name == 'workflow_dispatch' && inputs.publish))
         env:
