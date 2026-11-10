@@ -56,6 +56,17 @@ if (pkg.name === '@ultrst-armada/frnlts') {
   assert.equal(pkg.dependencies?.typescript, undefined,
     'TypeScript compiler tooling must not be a root production dependency');
   assert.ok(pkg.devDependencies?.typescript, 'TypeScript must remain available to build and type-check FrnlTS');
+
+  const lockfile = fs.readFileSync(path.join(root, 'pnpm-lock.yaml'), 'utf8');
+  const importerStart = lockfile.indexOf('  .:\\n');
+  const importerEnd = lockfile.indexOf('\\n  packages/cli:', importerStart);
+  assert.ok(importerStart >= 0 && importerEnd > importerStart, 'Root pnpm importer must exist');
+  const rootImporter = lockfile.slice(importerStart, importerEnd);
+  const [production, development = ''] = rootImporter.split('    devDependencies:');
+  assert.doesNotMatch(production, /^      typescript:/m,
+    'TypeScript must not be installed as a root production dependency in the lockfile');
+  assert.match(development, /^      typescript:/m,
+    'Root lockfile must retain TypeScript as a development dependency');
 }
 if (pkg.name === '@dinilmusick/gutts') {
   const higherLevel = Object.keys({ ...pkg.dependencies, ...pkg.optionalDependencies, ...pkg.peerDependencies })
