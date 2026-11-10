@@ -33,20 +33,27 @@ fs.mkdirSync(consumerDir);
 fs.mkdirSync(unpackedDir);
 
 try {
-  let packedJson;
+  let packed;
   for (let attempt = 1; attempt <= 20; attempt++) {
     try {
       execFileSync('npm', ['view', `${packageName}@${version}`, 'version'], { stdio: 'ignore' });
-      packedJson = execFileSync('npm', ['pack', `${packageName}@${version}`, '--json', '--pack-destination', packDir], { encoding: 'utf8' });
-      break;
-    } catch (error) {
-      if (attempt === 20) throw error;
-      console.log(`Waiting for ${packageName}@${version} to finish processing on npm (attempt ${attempt}/20)...`);
-      execFileSync('sleep', ['10']);
+      const packedJson = execFileSync('npm', ['pack', `${packageName}@${version}`, '--json', '--pack-destination', packDir], { encoding: 'utf8' });
+      const jsonStart = packedJson.indexOf('[');
+      const jsonEnd = packedJson.lastIndexOf(']');
+      if (jsonStart !== -1 && jsonEnd !== -1) {
+        packed = JSON.parse(packedJson.slice(jsonStart, jsonEnd + 1));
+      } else {
+        packed = JSON.parse(packedJson);
+      }
+      if (packed?.[0]?.filename) break;
+    } catch {
+      // transient failure while npm propagates
     }
+    if (attempt === 20) throw new Error(`Could not pack ${packageName}@${version} from npm after 20 attempts`);
+    console.log(`Waiting for ${packageName}@${version} to finish processing on npm (attempt ${attempt}/20)...`);
+    execFileSync('sleep', ['10']);
   }
-  const packed = JSON.parse(packedJson);
-  assert.ok(packed[0]?.filename, 'npm pack must return the published tarball filename');
+  assert.ok(packed?.[0]?.filename, 'npm pack must return the published tarball filename');
   const tarball = path.join(packDir, packed[0].filename);
 
   execFileSync('tar', ['-xzf', tarball, '-C', unpackedDir, '--strip-components=1']);
