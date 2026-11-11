@@ -24,10 +24,10 @@ const entries = [
 function importsFrom(source) {
   const found = new Set();
   const patterns = [
-    /\\bimport\\s*(?:[^'";]*?\\sfrom\\s*)?['"]([^'"]+)['"]/g,
-    /\\bexport\\s+(?:\\*|\\{[^}]*\\})\\s+from\\s*['"]([^'"]+)['"]/g,
-    /\\bimport\\s*\\(\\s*['"]([^'"]+)['"]\\s*\\)/g,
-    /\\brequire\\s*\\(\\s*['"]([^'"]+)['"]\\s*\\)/g,
+    /\bimport\s*(?:[^'";]*?\sfrom\s*)?['"]([^'"]+)['"]/g,
+    /\bexport\s+(?:\*|\{[^}]*\})\s+from\s*['"]([^'"]+)['"]/g,
+    /\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
+    /\brequire\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
   ];
   for (const pattern of patterns) {
     for (const match of source.matchAll(pattern)) found.add(match[1]);
