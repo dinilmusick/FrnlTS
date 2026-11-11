@@ -62,8 +62,8 @@ export type FrnlInputContract<T> = {
   requireConfirmation?: boolean;
   cache?: SemanticInputCache;
   signal?: AbortSignal;
-  onEvent?: (event: import("@dinilmusick/gutts").SemanticInputEvent) => void;
-  onProgress?: (progress: import("@dinilmusick/gutts").SemanticInputProgress) => void;
+  onEvent?: (event: import("@dinilmusick/gutts/browser").SemanticInputEvent) => void;
+  onProgress?: (progress: import("@dinilmusick/gutts/browser").SemanticInputProgress) => void;
   modelPolicy?: SemanticInputModelPolicy;
 };
 
@@ -193,8 +193,8 @@ export type FrnlSemanticFormContract<T> = {
   schema?: SemanticInputSchema;
   context?: FrnlSemanticContext;
   preserveRawInput?: boolean;
-  onEvent?: (event: import("@dinilmusick/gutts").SemanticInputEvent) => void;
-  onProgress?: (progress: import("@dinilmusick/gutts").SemanticInputProgress) => void;
+  onEvent?: (event: import("@dinilmusick/gutts/browser").SemanticInputEvent) => void;
+  onProgress?: (progress: import("@dinilmusick/gutts/browser").SemanticInputProgress) => void;
   modelPolicy?: SemanticInputModelPolicy;
 };
 
