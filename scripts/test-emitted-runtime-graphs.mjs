@@ -85,15 +85,18 @@ function inspectEntry(label, relativeEntry) {
 }
 
 assert.equal(packageJson.name, '@ultrst-armada/frnlts');
-assert.equal(
-  packageJson.dependencies?.typescript,
-  undefined,
-  'The TypeScript compiler must not be installed as a FrnlTS runtime dependency',
-);
 assert.ok(
-  packageJson.devDependencies?.typescript,
-  'The TypeScript compiler must remain available for local build and typecheck scripts',
+  packageJson.dependencies?.typescript,
+  'The public /validate export requires TypeScript at runtime; keep it out of the browser/Worker emitted runtime graphs instead',
 );
+for (const tool of ['tsup', 'vitest', '@types/node', '@types/react', '@types/react-dom']) {
+  assert.equal(
+    packageJson.dependencies?.[tool],
+    undefined,
+    `Build/test/type declaration tool ${tool} must not be a production dependency`,
+  );
+  assert.ok(packageJson.devDependencies?.[tool], `Build/test tool ${tool} must remain a development dependency`);
+}
 const results = entries.map(([label, entry]) => inspectEntry(label, entry));
 
 const semanticInput = fs.readFileSync(path.join(root, 'src/runtime/semantic-input.ts'), 'utf8');
