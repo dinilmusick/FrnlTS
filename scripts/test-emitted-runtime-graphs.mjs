@@ -25,7 +25,7 @@ function importsFrom(source) {
   const found = new Set();
   const patterns = [
     /\bimport\s*(?:[^'";]*?\sfrom\s*)?['"]([^'"]+)['"]/g,
-    /\bexport\s+(?:\*|\{[^}]*\})\s+from\s*['"]([^'"]+)['"]/g,
+    /\bexport\s+(?:\*\s+as\s+[\w$]+|\*|\{[^}]*\})\s+from\s*['"]([^'"]+)['"]/g,
     /\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
     /\brequire\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
   ];
