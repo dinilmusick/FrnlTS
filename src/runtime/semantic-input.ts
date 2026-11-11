@@ -1,16 +1,15 @@
-import {
-  resolveSemanticInput,
+import type {
   SemanticInputCache,
-  type SemanticInputCandidate,
-  type SemanticInputContext,
-  type SemanticInputResolution,
-  type SemanticInputSchema,
-  type SemanticInputRisk,
-  type SemanticInputModelPolicy,
-  type SemanticInputProvenance,
-  type SemanticInputProgress,
-  type SemanticInputEvent,
-} from "@dinilmusick/gutts/browser";
+  SemanticInputCandidate,
+  SemanticInputContext,
+  SemanticInputResolution,
+  SemanticInputSchema,
+  SemanticInputRisk,
+  SemanticInputModelPolicy,
+  SemanticInputProvenance,
+  SemanticInputProgress,
+  SemanticInputEvent,
+} from "@dinilmusick/gutts/semantic-input";
 import {createContext, createElement, type ReactNode, useContext} from "react";
 import {z} from "zod";
 
@@ -140,6 +139,7 @@ export async function resolveFrnlInput<T>(
   input: string,
   sharedContext?: FrnlSemanticContext,
 ): Promise<FrnlResolvedInput<T>> {
+  const {resolveSemanticInput} = await import("@dinilmusick/gutts/semantic-input");
   const mergedContext = buildContext(contract, sharedContext);
   const rawResolution = await resolveSemanticInput<unknown>({
     input,
@@ -230,6 +230,7 @@ export async function resolveFrnlFormInput<T>(
   contract: FrnlSemanticFormContract<T>,
   input: string,
 ): Promise<FrnlResolvedForm<T>> {
+  const {resolveSemanticInput} = await import("@dinilmusick/gutts/semantic-input");
   const fieldEntries = Object.entries(contract.fields);
   const schema = contract.schema ?? compileFrnlSemanticFormSchema(contract.fields);
 
