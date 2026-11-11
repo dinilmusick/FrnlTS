@@ -123,6 +123,11 @@ assert.doesNotMatch(
   /from\s+['"]@dinilmusick\/gutts(?:\/browser)?['"]/,
   'Semantic input must not statically import GutTS runtime implementations',
 );
+assert.doesNotMatch(
+  semanticInput,
+  /import\s*\(\s*['"]@dinilmusick\/gutts\/browser['"]/,
+  'Semantic input type references must not point at the browser barrel that omits semantic-input declarations',
+);
 assert.equal(
   [...semanticInput.matchAll(/await\s+import\s*\(\s*['"]@dinilmusick\/gutts\/semantic-input['"]\s*\)/g)].length,
   2,
