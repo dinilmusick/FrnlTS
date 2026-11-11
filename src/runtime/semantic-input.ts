@@ -10,7 +10,7 @@ import {
   type SemanticInputProvenance,
   type SemanticInputProgress,
   type SemanticInputEvent,
-} from "@dinilmusick/gutts";
+} from "@dinilmusick/gutts/browser";
 import {createContext, createElement, type ReactNode, useContext} from "react";
 import {z} from "zod";
 
