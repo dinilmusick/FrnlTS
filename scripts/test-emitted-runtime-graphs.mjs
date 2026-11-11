@@ -99,6 +99,37 @@ assert.doesNotMatch(
   'Semantic input must not import the GutTS package root',
 );
 
+assert.doesNotMatch(
+  semanticInput,
+  /@dinilmusick\\/gutts(?!\\/browser)/,
+  'Semantic input type references must also target GutTS browser declarations',
+);
+
+const declarationRoot = path.join(root, 'dist');
+const declarationFiles = [];
+function collectDeclarations(directory) {
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const file = path.join(directory, entry.name);
+    if (entry.isDirectory()) collectDeclarations(file);
+    else if (entry.isFile() && entry.name.endsWith('.d.ts')) declarationFiles.push(file);
+  }
+}
+collectDeclarations(declarationRoot);
+assert.ok(declarationFiles.length > 0, 'Build must emit public declaration files');
+
+for (const file of declarationFiles) {
+  const source = fs.readFileSync(file, 'utf8');
+  for (const specifier of importsFrom(source)) {
+    assert.ok(!builtins.has(specifier), `Declaration graph imports Node builtin "${specifier}" from ${path.relative(root, file)}`);
+    if (!specifier.startsWith('.') && !specifier.startsWith('/')) {
+      assert.ok(
+        portableExternalImports.has(specifier),
+        `Declaration graph contains non-portable dependency "${specifier}" in ${path.relative(root, file)}`,
+      );
+    }
+  }
+}
+
 console.log(JSON.stringify({
   package: packageJson.name,
   checks: results,
