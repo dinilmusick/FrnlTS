@@ -8,6 +8,7 @@ const packageJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 
 const builtins = new Set(builtinModules.flatMap((name) => [name, `node:${name}`]));
 const portableExternalImports = new Set([
   '@dinilmusick/gutts/browser',
+  '@dinilmusick/gutts/semantic-input',
   'react',
   'react/jsx-runtime',
   'zustand',
@@ -62,6 +63,18 @@ function inspectEntry(label, relativeEntry) {
         pending.push(resolved);
         continue;
       }
+      if (specifier === '@dinilmusick/gutts/semantic-input') {
+        assert.match(
+          source,
+          /import\s*\(\s*['"]@dinilmusick\/gutts\/semantic-input['"]\s*\)/,
+          `${label} may load model-backed semantic input only through a lazy dynamic import`,
+        );
+        assert.doesNotMatch(
+          source,
+          /(?:from\s*|import\s*)['"]@dinilmusick\/gutts\/semantic-input['"]/,
+          `${label} must not statically import model-backed semantic input into its Worker-safe graph`,
+        );
+      }
       external.add(specifier);
       assert.ok(
         portableExternalImports.has(specifier),
@@ -85,24 +98,44 @@ function inspectEntry(label, relativeEntry) {
 }
 
 assert.equal(packageJson.name, '@ultrst-armada/frnlts');
+assert.ok(
+  packageJson.dependencies?.typescript,
+  'The public /validate export requires TypeScript at runtime; keep it out of the browser/Worker emitted runtime graphs instead',
+);
+for (const tool of ['tsup', 'vitest', '@types/react', '@types/react-dom']) {
+  assert.equal(
+    packageJson.dependencies?.[tool],
+    undefined,
+    `Build/test/type declaration tool ${tool} must not be a production dependency`,
+  );
+  assert.ok(packageJson.devDependencies?.[tool], `Build/test tool ${tool} must remain a development dependency`);
+}
+const cliManifest = JSON.parse(fs.readFileSync(path.join(root, 'packages/cli/package.json'), 'utf8'));
+assert.equal(cliManifest.dependencies?.['@types/node'], undefined, 'Node type declarations must not be a CLI runtime dependency');
+assert.ok(cliManifest.devDependencies?.['@types/node'], 'Node type declarations belong in CLI development dependencies');
+
 const results = entries.map(([label, entry]) => inspectEntry(label, entry));
 
 const semanticInput = fs.readFileSync(path.join(root, 'src/runtime/semantic-input.ts'), 'utf8');
 assert.match(
   semanticInput,
-  /from\s+['"]@dinilmusick\/gutts\/browser['"]/,
-  'Semantic input must use GutTS browser exports, never the Node-oriented package root',
+  /import\s+type\s+{[\s\S]*?}\s+from\s+['"]@dinilmusick\/gutts\/semantic-input['"]/,
+  'Semantic input contracts must use the dedicated GutTS semantic-input type surface',
 );
 assert.doesNotMatch(
   semanticInput,
-  /from\s+['"]@dinilmusick\/gutts['"]/,
-  'Semantic input must not import the GutTS package root',
+  /from\s+['"]@dinilmusick\/gutts(?:\/browser)?['"]/,
+  'Semantic input must not statically import GutTS runtime implementations',
 );
-
 assert.doesNotMatch(
   semanticInput,
-  /@dinilmusick\/gutts(?!\/browser)/,
-  'Semantic input type references must also target GutTS browser declarations',
+  /import\s*\(\s*['"]@dinilmusick\/gutts\/browser['"]/,
+  'Semantic input type references must not point at the browser barrel that omits semantic-input declarations',
+);
+assert.equal(
+  [...semanticInput.matchAll(/await\s+import\s*\(\s*['"]@dinilmusick\/gutts\/semantic-input['"]\s*\)/g)].length,
+  2,
+  'Model-backed semantic input must be loaded lazily only when its async APIs are invoked',
 );
 
 const declarationRoot = path.join(root, 'dist');
