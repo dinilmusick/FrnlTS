@@ -101,7 +101,7 @@ assert.doesNotMatch(
 
 assert.doesNotMatch(
   semanticInput,
-  /@dinilmusick\\/gutts(?!\\/browser)/,
+  /@dinilmusick\/gutts(?!\/browser)/,
   'Semantic input type references must also target GutTS browser declarations',
 );
 
