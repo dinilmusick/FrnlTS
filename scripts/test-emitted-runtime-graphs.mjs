@@ -102,7 +102,7 @@ assert.ok(
   packageJson.dependencies?.typescript,
   'The public /validate export requires TypeScript at runtime; keep it out of the browser/Worker emitted runtime graphs instead',
 );
-for (const tool of ['tsup', 'vitest', '@types/node', '@types/react', '@types/react-dom']) {
+for (const tool of ['tsup', 'vitest', '@types/react', '@types/react-dom']) {
   assert.equal(
     packageJson.dependencies?.[tool],
     undefined,
@@ -110,6 +110,10 @@ for (const tool of ['tsup', 'vitest', '@types/node', '@types/react', '@types/rea
   );
   assert.ok(packageJson.devDependencies?.[tool], `Build/test tool ${tool} must remain a development dependency`);
 }
+const cliManifest = JSON.parse(fs.readFileSync(path.join(root, 'packages/cli/package.json'), 'utf8'));
+assert.equal(cliManifest.dependencies?.['@types/node'], undefined, 'Node type declarations must not be a CLI runtime dependency');
+assert.ok(cliManifest.devDependencies?.['@types/node'], 'Node type declarations belong in CLI development dependencies');
+
 const results = entries.map(([label, entry]) => inspectEntry(label, entry));
 
 const semanticInput = fs.readFileSync(path.join(root, 'src/runtime/semantic-input.ts'), 'utf8');
