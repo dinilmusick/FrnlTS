@@ -4,7 +4,7 @@ import {z} from "zod";
 const resolveSemanticInputMock = vi.fn();
 const rankSemanticInputCandidatesMock = vi.fn();
 
-vi.mock("@dinilmusick/gutts", () => ({
+vi.mock("@dinilmusick/gutts/semantic-input", () => ({
   resolveSemanticInput: (args: unknown) => resolveSemanticInputMock(args),
   rankSemanticInputCandidates: (input: string, candidates: readonly string[]) =>
     rankSemanticInputCandidatesMock(input, candidates),
