@@ -66,12 +66,12 @@ function inspectEntry(label, relativeEntry) {
       if (specifier === '@dinilmusick/gutts/semantic-input') {
         assert.match(
           source,
-          /import\\s*\\(\\s*['"]@dinilmusick\\/gutts\\/semantic-input['"]\\s*\\)/,
+          /import\s*\(\s*['"]@dinilmusick\/gutts\/semantic-input['"]\s*\)/,
           `${label} may load model-backed semantic input only through a lazy dynamic import`,
         );
         assert.doesNotMatch(
           source,
-          /(?:from\\s*|import\\s*)['"]@dinilmusick\\/gutts\\/semantic-input['"]/,
+          /(?:from\s*|import\s*)['"]@dinilmusick\/gutts\/semantic-input['"]/,
           `${label} must not statically import model-backed semantic input into its Worker-safe graph`,
         );
       }
