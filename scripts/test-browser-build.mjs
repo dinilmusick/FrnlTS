@@ -26,9 +26,9 @@ try {
   const source = fs.readFileSync(entry, 'utf8');
   const builtins = new Set(builtinModules.flatMap((name) => [name, 'node:' + name]));
   const patterns = [
-    /\\bimport\\s*(?:[^'\";]*?\\sfrom\\s*)?['\"]([^'\"]+)['\"]/g,
-    /\\bexport\\s+(?:\\*\\s+as\\s+[\\w$]+|\\*|\\{[^}]*\\})\\s+from\\s*['\"]([^'\"]+)['\"]/g,
-    /\\bimport\\s*\\(\\s*['\"]([^'\"]+)['\"]\\s*\\)/g,
+    /\bimport\s*(?:[^'\";]*?\sfrom\s*)?['\"]([^'\"]+)['\"]/g,
+    /\bexport\s+(?:\*\s+as\s+[\w$]+|\*|\{[^}]*\})\s+from\s*['\"]([^'\"]+)['\"]/g,
+    /\bimport\s*\(\s*['\"]([^'\"]+)['\"]\s*\)/g,
   ];
   const imports = new Set();
   for (const pattern of patterns) {
@@ -37,7 +37,7 @@ try {
   for (const specifier of imports) {
     assert.ok(!builtins.has(specifier), 'Browser build contains Node builtin: ' + specifier);
   }
-  assert.doesNotMatch(source, /(?:from\\s*|import\\s*)['\"][^'\"]+\\.css['\"]/, 'React build must not pull CSS implicitly');
+  assert.doesNotMatch(source, /(?:from\s*|import\s*)['\"][^'\"]+\.css['\"]/, 'React build must not pull CSS implicitly');
 
   const cssTargets = [];
   function collectTargets(value) {
