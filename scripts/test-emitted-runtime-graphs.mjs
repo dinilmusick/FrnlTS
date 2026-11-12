@@ -80,6 +80,12 @@ function inspectEntry(label, relativeEntry) {
         portableExternalImports.has(specifier),
         `${label} emitted graph contains an unapproved external dependency "${specifier}" in ${path.relative(root, file)}`,
       );
+      if (label === 'runtime') {
+        assert.ok(
+          specifier !== 'react' && specifier !== 'react/jsx-runtime' && specifier !== '@dinilmusick/gutts/browser',
+          'Headless runtime must not load React or the GutTS browser entry: ' + specifier,
+        );
+      }
       assert.ok(
         !specifier.startsWith('@ultrst-armada/frnlts/cli') &&
         !specifier.startsWith('@ultrst-armada/frnlts/validate') &&
@@ -159,6 +165,12 @@ for (const file of declarationFiles) {
         portableExternalImports.has(specifier),
         `Declaration graph contains non-portable dependency "${specifier}" in ${path.relative(root, file)}`,
       );
+      if (file.startsWith(path.join(declarationRoot, 'runtime') + path.sep)) {
+        assert.ok(
+          specifier !== 'react' && specifier !== 'react/jsx-runtime',
+          'Headless runtime declarations must not depend on React: ' + specifier,
+        );
+      }
     }
   }
 }

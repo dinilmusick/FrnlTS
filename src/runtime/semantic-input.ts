@@ -10,7 +10,6 @@ import type {
   SemanticInputProgress,
   SemanticInputEvent,
 } from "@dinilmusick/gutts/semantic-input";
-import {createContext, createElement, type ReactNode, useContext} from "react";
 import {z} from "zod";
 
 export type {
@@ -71,8 +70,6 @@ export type FrnlResolvedInput<T> = SemanticInputResolution<T> & {
   provenance?: SemanticInputProvenance;
 };
 
-const FrnlSemanticContextValue = createContext<FrnlSemanticContext>({});
-
 export function mergeFrnlSemanticContext(
   parent: FrnlSemanticContext,
   child?: FrnlSemanticContext,
@@ -87,27 +84,6 @@ export function mergeFrnlSemanticContext(
     locale: child.locale ?? parent.locale,
     fields: child.fields ? [...(parent.fields ?? []), ...child.fields] : parent.fields,
   };
-}
-
-export function FrnlSemanticContextProvider({
-  value,
-  children,
-}: {
-  value: FrnlSemanticContext;
-  children?: ReactNode;
-}) {
-  const parent = useContext(FrnlSemanticContextValue);
-  return createElement(
-    FrnlSemanticContextValue.Provider,
-    {value: mergeFrnlSemanticContext(parent, value)},
-    children,
-  );
-}
-
-export const FrnlSemanticInputProvider = FrnlSemanticContextProvider;
-
-export function useFrnlSemanticInputContext(): FrnlSemanticContext {
-  return useContext(FrnlSemanticContextValue);
 }
 
 function buildContext(
