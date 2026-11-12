@@ -65,6 +65,15 @@ Only **`@ultrst-armada/frnlts`** is published. Validation and CLI code live in t
 
 The internal `packages/validate` and `packages/cli` workspace projects are not separately published.
 
+## Runtime portability boundaries
+
+- `@ultrst-armada/frnlts/runtime` is the headless runtime entry point. It exposes semantic contracts, component state, events, orchestration and semantic-input resolution without importing React or the GutTS browser runtime.
+- `@ultrst-armada/frnlts/react` contains React hooks and semantic-input context providers.
+- The root entry point preserves the combined frontend API for compatibility and therefore includes the React-facing exports.
+- FrnlTS does not ship graph-rendering libraries or CSS assets. Floks owns concrete graph visualization and UI rendering.
+
+The runtime's optional model-backed semantic-input implementation is loaded only when its asynchronous resolution APIs are called.
+
 ## CLI
 
 After installing FrnlTS, use the `frnl` executable:

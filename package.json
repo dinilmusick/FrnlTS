@@ -44,7 +44,7 @@
   },
   "scripts": {
     "build": "pnpm -r run build && tsup src/index.ts src/react/index.ts src/runtime/index.ts --format esm --dts --clean --external react --external react-dom",
-    "test": "pnpm build && pnpm -r run test && vitest run && pnpm run test:runtime-graphs",
+    "test": "pnpm build && pnpm -r run test && vitest run && pnpm run test:runtime-graphs && pnpm run test:public-exports && pnpm run test:universal-consumer && pnpm run test:browser-build",
     "typecheck": "pnpm --filter @ultrst-armada/frnlts-validate run build && pnpm -r run typecheck && tsc --noEmit",
     "validate": "node packages/cli/dist/bin/frnl.js validate",
     "dev": "node packages/cli/dist/bin/frnl.js dev",
@@ -54,7 +54,9 @@
     "boundary:relative": "node scripts/relative-package-boundary.mjs",
     "test:public-exports": "node scripts/test-public-exports.mjs",
     "test:published": "node scripts/test-published-package.mjs",
-    "test:runtime-graphs": "node scripts/test-emitted-runtime-graphs.mjs"
+    "test:runtime-graphs": "node scripts/test-emitted-runtime-graphs.mjs",
+    "test:universal-consumer": "node scripts/test-universal-consumer.mjs",
+    "test:browser-build": "node scripts/test-browser-build.mjs"
   },
   "dependencies": {
     "@dinilmusick/gutts": "^2.0.2",
