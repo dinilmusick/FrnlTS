@@ -77,3 +77,21 @@ if (pkg.name === '@dinilmusick/gutts') {
 
 assert.ok(checked.length > 0, 'At least one JavaScript public entry point must be import-tested');
 console.log(JSON.stringify({ package: pkg.name, publicEntryPointsImported: checked }, null, 2));
+
+if (pkg.name === '@ultrst-armada/frnlts') {
+  const root = await import(pkg.name);
+  const react = await import(pkg.name + '/react');
+  const runtime = await import(pkg.name + '/runtime');
+  assert.equal(typeof root.FrnlSemanticContextProvider, 'function',
+    'Root API must preserve the existing semantic-input React provider export');
+  assert.equal(typeof root.FrnlSemanticInputProvider, 'function',
+    'Root API must preserve the existing semantic-input provider alias');
+  assert.equal(typeof root.useFrnlSemanticInputContext, 'function',
+    'Root API must preserve the existing semantic-input context hook');
+  assert.equal(typeof react.FrnlSemanticContextProvider, 'function',
+    'React entry point must expose the semantic-input provider');
+  assert.equal(typeof runtime.mergeFrnlSemanticContext, 'function',
+    'Headless runtime must retain pure semantic-context merging');
+  assert.equal(runtime.FrnlSemanticContextProvider, undefined,
+    'Headless runtime must not export or load the React provider');
+}
