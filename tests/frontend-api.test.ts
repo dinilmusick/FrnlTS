@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createFrnlStore } from '../src/runtime/store.js';
 import { createFrnlFrontendApi, installFrnlFrontendApi } from '../src/runtime/frontend-api.js';
 import { defineFrnlComponent } from '../src/runtime/component-definition.js';
+import { createFrnlDomMeasurementAdapter } from '../src/runtime/measurement.js';
 
 const buttonDefinition = defineFrnlComponent({
   name: 'Button',
@@ -43,6 +44,8 @@ describe('Frnl frontend API', () => {
     expect(snapshot.components[0].properties.label).toBe('Create Service');
     expect(snapshot.components[0].controls.click.available).toBe(true);
     expect(snapshot.components[0].controls.hover.available).toBe(false); // No handler registered
+    expect(snapshot.components[0].realized.mounted).toBe(true);
+    expect(snapshot.components[0].realized.visible).toBe(true);
   });
 
   it('correctly distinguishes non-existent, unmounted, and mounted components', () => {
@@ -121,6 +124,37 @@ describe('Frnl frontend API', () => {
     expect(page.children).toEqual(['create']);
     expect(child.path).toEqual(['page', 'create']);
     expect(api.inspect().tree.map((item) => item.id)).toEqual(['page']);
+  });
+
+  it('supports reactive subscriptions and an optional DOM realization adapter', () => {
+    const store = createFrnlStore();
+    store.getState().registerEntity('create', { state: 'idle', properties: {} });
+    store.getState().registerComponentDefinition('create', buttonDefinition);
+    const api = createFrnlFrontendApi(store, {
+      measurementAdapter: createFrnlDomMeasurementAdapter(),
+    });
+    const states: string[] = [];
+    const unsubscribe = api.subscribe((snapshot) => states.push(snapshot.components[0]?.state ?? 'missing'));
+    store.getState().setEntityState('create', 'active');
+    expect(states).toContain('active');
+    unsubscribe();
+    api.dispose();
+  });
+
+  it('supports a custom realization adapter without making it semantic authority', () => {
+    const store = createFrnlStore();
+    store.getState().registerEntity('create', { state: 'idle', properties: {} });
+    store.getState().registerComponentDefinition('create', buttonDefinition);
+    const api = createFrnlFrontendApi(store, {
+      measurementAdapter: {
+        measure: () => ({ mounted: true, visible: false, geometry: { x: 10, y: 20, width: 100, height: 40 } }),
+      },
+    });
+    const snapshot = api.inspectComponent('create');
+    expect(snapshot.state).toBe('idle');
+    expect(snapshot.realized.visible).toBe(false);
+    expect(snapshot.realized.geometry).toEqual({ x: 10, y: 20, width: 100, height: 40 });
+    api.dispose();
   });
 
   it('installs global API and handles disposal', () => {
