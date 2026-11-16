@@ -13,5 +13,6 @@ export * from './themes.js';
 export * from './component-definition.js';
 export * from './orchestration.js';
 export * from './frontend-api.js';
+export * from './measurement.js';
 
 export * from "./semantic-input.js";
