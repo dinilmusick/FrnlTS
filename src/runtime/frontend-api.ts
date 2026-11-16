@@ -3,9 +3,28 @@ import type { FrnlComponentDefinition } from './component-definition.js';
 import { getFrnlVisualParameters, invokeFrnlEvent } from './events.js';
 import type { FrnlState, FrnlEvent } from './store.js';
 
+export type FrnlGeometry = {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+};
+
+export type FrnlRealizedState = {
+  readonly mounted: boolean;
+  readonly visible: boolean;
+  readonly geometry?: FrnlGeometry;
+};
+
+/** Supplies realized browser/React facts without becoming the semantic source of truth. */
+export interface FrnlMeasurementAdapter {
+  measure(componentId: string): FrnlRealizedState | undefined;
+}
+
 export type FrnlFrontendApiOptions = {
   readonly applicationId?: string;
   readonly route?: string;
+  readonly measurementAdapter?: FrnlMeasurementAdapter;
 };
 
 export type FrnlComponentControl = {
@@ -33,6 +52,7 @@ export type FrnlComponentSnapshot = {
   readonly controls: Readonly<Record<string, FrnlComponentControl>>;
   readonly events: readonly string[];
   readonly children: readonly string[];
+  readonly realized: FrnlRealizedState;
 };
 
 export type FrnlFrontendSnapshot = {
@@ -56,6 +76,7 @@ export type FrnlFrontendApi = {
     readonly invoke: (controlId: string, payload?: unknown) => unknown | Promise<unknown>;
   };
   readonly invoke: (componentId: string, controlId: string, payload?: unknown) => unknown | Promise<unknown>;
+  readonly subscribe: (listener: (snapshot: FrnlFrontendSnapshot) => void) => () => void;
   readonly dispose: () => void;
 };
 
@@ -94,6 +115,7 @@ function snapshotFor(
   store: StoreApi<FrnlState>,
   componentId: string,
   mountedAt: number | undefined,
+  measurementAdapter: FrnlMeasurementAdapter | undefined,
 ): FrnlComponentSnapshot {
   const current = store.getState();
   const entity = current.entities[componentId];
@@ -193,6 +215,10 @@ function snapshotFor(
     controls: Object.freeze(controls),
     events: Object.freeze(names),
     children: Object.freeze(childrenOf(store, componentId)),
+    realized: Object.freeze(measurementAdapter?.measure(componentId) ?? {
+      mounted: isMounted,
+      visible: isMounted,
+    }),
   };
 }
 
@@ -213,7 +239,12 @@ export function createFrnlFrontendApi(
     }
   });
 
-  const inspectComponent = (componentId: string) => snapshotFor(store, componentId, mountedAt.get(componentId));
+  const inspectComponent = (componentId: string) => snapshotFor(
+    store,
+    componentId,
+    mountedAt.get(componentId),
+    options.measurementAdapter,
+  );
 
   const inspect = (): FrnlFrontendSnapshot => {
     const current = store.getState();
@@ -223,7 +254,7 @@ export function createFrnlFrontendApi(
     ]);
     const components = [...allIds]
       .sort()
-      .map((id) => snapshotFor(store, id, mountedAt.get(id)));
+.map((id) => snapshotFor(store, id, mountedAt.get(id), options.measurementAdapter));
 
     return {
       apiVersion: 1,
@@ -238,6 +269,15 @@ export function createFrnlFrontendApi(
       libraries: Object.freeze(Object.keys(current.libraries).sort()),
     };
   };
+
+  const listeners = new Set<(snapshot: FrnlFrontendSnapshot) => void>();
+  let disposed = false;
+  const emitSnapshot = () => {
+    if (disposed) return;
+    const snapshot = inspect();
+    for (const listener of [...listeners]) listener(snapshot);
+  };
+  const storeUnsubscribe = store.subscribe(emitSnapshot);
 
   const invoke = (componentId: string, controlId: string, payload?: unknown) => {
     const control = inspectComponent(componentId).controls[controlId];
@@ -254,7 +294,19 @@ export function createFrnlFrontendApi(
       invoke: (controlId, payload) => invoke(componentId, controlId, payload),
     }),
     invoke,
-    dispose: unsubscribe,
+    subscribe: (listener) => {
+      if (disposed) throw new Error('Frnl frontend API has been disposed');
+      listeners.add(listener);
+      listener(inspect());
+      return () => listeners.delete(listener);
+    },
+    dispose: () => {
+      if (disposed) return;
+      disposed = true;
+      listeners.clear();
+      storeUnsubscribe();
+      unsubscribe();
+    },
   });
 }
 
