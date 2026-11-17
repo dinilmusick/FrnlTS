@@ -25,6 +25,10 @@ export const frnlStateDefinitionSchema = z.object({
 
 export const frnlComponentDefinitionSchema = z.object({
   name: z.string().min(1),
+  presentation: z.object({
+    role: z.string().min(1).optional(),
+    label: z.string().min(1).optional(),
+  }).optional(),
   states: z.record(z.string().min(1), frnlStateDefinitionSchema),
 });
 

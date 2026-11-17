@@ -2,6 +2,9 @@ import type { StoreApi } from 'zustand/vanilla';
 import type { FrnlComponentDefinition } from './component-definition.js';
 import { getFrnlVisualParameters, invokeFrnlEvent } from './events.js';
 import type { FrnlState, FrnlEvent } from './store.js';
+import { resolveFrnlPresentation, type FrnlPresentation } from './presentation.js';
+
+export type { FrnlPresentation };
 
 export type FrnlGeometry = {
   readonly x: number;
@@ -14,6 +17,15 @@ export type FrnlRealizedState = {
   readonly mounted: boolean;
   readonly visible: boolean;
   readonly geometry?: FrnlGeometry;
+  readonly layout?: Readonly<{
+    tag: string;
+    display: string;
+    position: string;
+    visibility: string;
+    opacity: string;
+    overflowX: string;
+    overflowY: string;
+  }>;
 };
 
 /** Supplies realized browser/React facts without becoming the semantic source of truth. */
@@ -48,6 +60,7 @@ export type FrnlComponentSnapshot = {
   };
   readonly state: string;
   readonly properties: Readonly<Record<string, unknown>>;
+  readonly presentation: FrnlPresentation;
   readonly visualParameters: Readonly<Record<string, unknown>>;
   readonly controls: Readonly<Record<string, FrnlComponentControl>>;
   readonly events: readonly string[];
@@ -127,10 +140,10 @@ function snapshotFor(
 
   const isMounted = Boolean(entity);
   const definition: FrnlComponentDefinition = explicitDefinition ?? {
-    name: typeof entity?.properties?.type === 'string' ? (entity.properties.type as string) : 'Component',
+    name: typeof entity?.properties?.type === 'string' ? entity.properties.type : 'Component',
     states: {
       [entity?.state ?? 'default']: {
-        visualDefinition: { parameters: {} },
+        name: entity?.state ?? 'default',
         events: {},
         phases: {
           sustainPhase: { visualDefinition: { parameters: {} } },
@@ -143,6 +156,7 @@ function snapshotFor(
   const names = eventNames(definition);
   const controls: Record<string, FrnlComponentControl> = {};
   const currentStateName = entity?.state ?? Object.keys(definition.states)[0] ?? 'default';
+  const properties = Object.freeze({ ...(entity?.properties ?? {}) });
 
   for (const name of names) {
     const eventDefinition = definition.states[currentStateName]?.events[name];
@@ -210,7 +224,8 @@ function snapshotFor(
       renderedAt: isMounted ? mountedAt : undefined,
     },
     state: currentStateName,
-    properties: Object.freeze({ ...(entity?.properties ?? {}) }),
+    properties,
+    presentation: resolveFrnlPresentation(definition, properties, currentStateName),
     visualParameters: Object.freeze({ ...(isMounted ? getFrnlVisualParameters(store, componentId) : {}) }),
     controls: Object.freeze(controls),
     events: Object.freeze(names),

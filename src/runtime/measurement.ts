@@ -21,21 +21,35 @@ export function createFrnlDomMeasurementAdapter(
       );
       if (!element) return undefined;
       const rect = element.getBoundingClientRect();
-      const style = typeof window !== 'undefined' ? window.getComputedStyle(element) : undefined;
-      const visible = Boolean(
-        rect.width > 0 &&
-        rect.height > 0 &&
+      const style = element.ownerDocument.defaultView?.getComputedStyle(element);
+      // This describes CSS visibility, independent of viewport clipping or overlap.
+      const cssVisible = element.checkVisibility?.({
+        opacityProperty: true,
+        visibilityProperty: true,
+        contentVisibilityAuto: true,
+      }) ?? (
         style?.display !== 'none' &&
         style?.visibility !== 'hidden' &&
-        Number(style?.opacity ?? 1) > 0,
+        style?.visibility !== 'collapse' &&
+        Number(style?.opacity ?? 1) > 0
       );
+      const visible = rect.width > 0 && rect.height > 0 && cssVisible;
       const geometry: FrnlGeometry = Object.freeze({
         x: rect.x,
         y: rect.y,
         width: rect.width,
         height: rect.height,
       });
-      return Object.freeze({ mounted: true, visible, geometry });
+      const layout = style && Object.freeze({
+        tag: element.localName,
+        display: style.display,
+        position: style.position,
+        visibility: style.visibility,
+        opacity: style.opacity,
+        overflowX: style.overflowX,
+        overflowY: style.overflowY,
+      });
+      return Object.freeze({ mounted: true, visible, geometry, ...(layout ? { layout } : {}) });
     },
   };
 }

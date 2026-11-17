@@ -6,6 +6,7 @@ import { createFrnlDomMeasurementAdapter } from '../src/runtime/measurement.js';
 
 const buttonDefinition = defineFrnlComponent({
   name: 'Button',
+  presentation: { role: 'button', label: 'Button' },
   states: {
     idle: {
       name: 'idle',
@@ -42,6 +43,14 @@ describe('Frnl frontend API', () => {
     expect(snapshot.components[0].lifecycle.mounted).toBe(true);
     expect(snapshot.components[0].lifecycle.rendered).toBe(true);
     expect(snapshot.components[0].properties.label).toBe('Create Service');
+    expect(snapshot.components[0].presentation).toEqual({
+      role: 'button',
+      label: 'Create Service',
+      disabled: false,
+      active: false,
+      selected: false,
+      loading: false,
+    });
     expect(snapshot.components[0].controls.click.available).toBe(true);
     expect(snapshot.components[0].controls.hover.available).toBe(false); // No handler registered
     expect(snapshot.components[0].realized.mounted).toBe(true);
@@ -154,6 +163,66 @@ describe('Frnl frontend API', () => {
     expect(snapshot.state).toBe('idle');
     expect(snapshot.realized.visible).toBe(false);
     expect(snapshot.realized.geometry).toEqual({ x: 10, y: 20, width: 100, height: 40 });
+    api.dispose();
+  });
+
+  it('reports browser geometry, CSS and visibility for a rendered element', () => {
+    const checkVisibility = vi.fn().mockReturnValue(false);
+    const root = {
+      querySelector: vi.fn().mockReturnValue({
+        localName: 'button',
+        getBoundingClientRect: () => ({ x: 2, y: 4, width: 96, height: 32 }),
+        checkVisibility,
+        ownerDocument: {
+          defaultView: {
+            getComputedStyle: () => ({
+              display: 'inline-block', position: 'relative', visibility: 'visible',
+              opacity: '1', overflowX: 'hidden', overflowY: 'hidden',
+            }),
+          },
+        },
+      }),
+    } as unknown as Document;
+
+    expect(createFrnlDomMeasurementAdapter({ root }).measure('create')).toEqual({
+      mounted: true,
+      visible: false,
+      geometry: { x: 2, y: 4, width: 96, height: 32 },
+      layout: {
+        tag: 'button', display: 'inline-block', position: 'relative', visibility: 'visible',
+        opacity: '1', overflowX: 'hidden', overflowY: 'hidden',
+      },
+    });
+    expect(checkVisibility).toHaveBeenCalledWith({
+      opacityProperty: true,
+      visibilityProperty: true,
+      contentVisibilityAuto: true,
+    });
+  });
+
+  it('updates presentation for subscribers and invokes the original event handler', () => {
+    const store = createFrnlStore();
+    const click = vi.fn();
+    store.getState().registerEntity('create', {
+      state: 'idle',
+      properties: { 'aria-label': 'Open workspace', 'aria-selected': 'true', label: 'Open' },
+    });
+    store.getState().registerComponentDefinition('create', buttonDefinition);
+    store.getState().registerEventHandlers('create', { click });
+    const api = createFrnlFrontendApi(store);
+    const listener = vi.fn();
+    api.subscribe(listener);
+
+    expect(api.inspectComponent('create').presentation).toMatchObject({
+      role: 'button',
+      label: 'Open workspace',
+      active: false,
+      selected: true,
+    });
+    store.getState().setEntityState('create', 'active');
+    expect(listener.mock.lastCall?.[0].components[0].presentation.active).toBe(true);
+    api.invoke('create', 'click', { id: 'demo' });
+    expect(click).toHaveBeenCalledWith({ id: 'demo' }, expect.objectContaining({ state: 'active' }));
     api.dispose();
   });
 
