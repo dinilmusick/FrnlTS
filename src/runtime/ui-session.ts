@@ -25,7 +25,7 @@ function summarize(options: FrnlUiSessionOptions) {
       presentation: component.presentation,
       realized: component.realized,
       details: options.describe?.(component),
-      actions: component.realized.visible && !component.presentation.disabled && !component.presentation.loading
+      actions: component.realized.mounted && component.realized.visible && !component.presentation.disabled && !component.presentation.loading
         ? Object.values(component.controls)
           .filter(control => control.kind === 'event' && control.available &&
             options.allowAction?.(component, control.id))
