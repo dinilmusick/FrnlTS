@@ -19,7 +19,7 @@ export function createFrnlDomMeasurementAdapter(
       const element = root.querySelector<HTMLElement>(
         '[data-frnl-component][id="' + escaped + '"]',
       );
-      if (!element) return undefined;
+      if (!element) return { mounted: false, visible: false };
       const rect = element.getBoundingClientRect();
       const style = element.ownerDocument.defaultView?.getComputedStyle(element);
       // This describes CSS visibility, independent of viewport clipping or overlap.
@@ -34,6 +34,11 @@ export function createFrnlDomMeasurementAdapter(
         Number(style?.opacity ?? 1) > 0
       );
       const visible = rect.width > 0 && rect.height > 0 && cssVisible;
+      const view = element.ownerDocument.defaultView;
+      const inViewport = view && Number.isFinite(view.innerWidth) && Number.isFinite(view.innerHeight)
+        ? visible && rect.x + rect.width > 0 && rect.y + rect.height > 0
+          && rect.x < view.innerWidth && rect.y < view.innerHeight
+        : undefined;
       const geometry: FrnlGeometry = Object.freeze({
         x: rect.x,
         y: rect.y,
@@ -49,7 +54,7 @@ export function createFrnlDomMeasurementAdapter(
         overflowX: style.overflowX,
         overflowY: style.overflowY,
       });
-      return Object.freeze({ mounted: true, visible, geometry, ...(layout ? { layout } : {}) });
+      return Object.freeze({ mounted: true, visible, ...(inViewport === undefined ? {} : { inViewport }), geometry, ...(layout ? { layout } : {}) });
     },
   };
 }
