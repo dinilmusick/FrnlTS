@@ -16,6 +16,8 @@ export type FrnlGeometry = {
 export type FrnlRealizedState = {
   readonly mounted: boolean;
   readonly visible: boolean;
+  /** CSS-visible element intersects the current viewport; undefined without browser dimensions. */
+  readonly inViewport?: boolean;
   readonly geometry?: FrnlGeometry;
   readonly layout?: Readonly<{
     tag: string;
@@ -230,10 +232,11 @@ function snapshotFor(
     controls: Object.freeze(controls),
     events: Object.freeze(names),
     children: Object.freeze(childrenOf(store, componentId)),
-    realized: Object.freeze(measurementAdapter?.measure(componentId) ?? {
-      mounted: isMounted,
-      visible: isMounted,
-    }),
+    // A configured measurement adapter is authoritative about realized DOM presence.
+    // Missing measurements must not turn a stale semantic entity into an actionable DOM element.
+    realized: Object.freeze(measurementAdapter
+      ? (measurementAdapter.measure(componentId) ?? { mounted: false, visible: false })
+      : { mounted: isMounted, visible: isMounted }),
   };
 }
 
