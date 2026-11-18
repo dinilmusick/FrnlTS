@@ -43,3 +43,64 @@ it('publishes a projected snapshot, invokes a registered event, and stops', asyn
   }
   expect(request).toHaveBeenLastCalledWith(session.endpoint, expect.objectContaining({ method: 'DELETE' }));
 });
+
+
+it('preserves live UI visibility states while denying events on unmounted, hidden and disabled controls', async () => {
+  vi.useFakeTimers();
+  const invoke = vi.fn();
+  const component = (
+    id: string,
+    mounted: boolean,
+    visible: boolean,
+    disabled = false,
+    loading = false,
+  ) => ({
+    id, type: 'tilesMenu', rendered: true, state: 'idle',
+    presentation: { disabled, loading },
+    realized: { mounted, visible },
+    controls: {
+      select: { id: 'select', kind: 'event', available: true },
+      setState: { id: 'setState', kind: 'setState', available: true },
+    },
+  });
+  const api = {
+    inspect: () => ({
+      application: { id: 'app' },
+      components: [
+        component('ready', true, true),
+        component('unmounted', false, true),
+        component('hidden', true, false),
+        component('disabled', true, true, true),
+        component('loading', true, true, false, true),
+      ],
+    }),
+    invoke,
+  } as unknown as FrnlFrontendApi;
+  const received: Array<{ revision: string; snapshot: {
+    components: Array<{ id: string; actions: string[]; realized: { mounted: boolean; visible: boolean } }>;
+  }; completion?: { id: string; status: string } }> = [];
+  const request = vi.fn<typeof fetch>(async (_url, init) => {
+    if (init?.method === 'DELETE') return new Response(null, { status: 204 });
+    const body = JSON.parse(String(init?.body));
+    received.push(body);
+    return Response.json({ command: received.length === 1
+      ? { id: 'blocked-command', revision: body.revision, componentId: 'unmounted', controlId: 'select' }
+      : null });
+  });
+  const session = startFrnlUiSession({ api, request, allowAction: () => true });
+  try {
+    await vi.advanceTimersByTimeAsync(2_000);
+    const records = Object.fromEntries(received[0].snapshot.components.map(c => [c.id, c]));
+    expect(records.ready.actions).toEqual(['select']);
+    for (const id of ['unmounted', 'hidden', 'disabled', 'loading']) {
+      expect(records[id].actions).toEqual([]);
+    }
+    expect(records.unmounted.realized).toEqual({ mounted: false, visible: true });
+    expect(records.hidden.realized).toEqual({ mounted: true, visible: false });
+    expect(invoke).not.toHaveBeenCalled();
+    expect(received[1].completion).toEqual({ id: 'blocked-command', status: 'failed' });
+  } finally {
+    session.stop();
+    vi.useRealTimers();
+  }
+});
