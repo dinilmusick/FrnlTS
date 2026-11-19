@@ -237,3 +237,62 @@ describe('Frnl frontend API', () => {
     expect(() => api.dispose()).not.toThrow();
   });
 });
+
+
+describe('realized UI session visibility', () => {
+  it('fails closed when a semantic entity has no realized DOM node', () => {
+    const store = createFrnlStore();
+    store.getState().registerEntity('stale-tab', { state: 'idle', properties: {} });
+    store.getState().registerComponentDefinition('stale-tab', buttonDefinition);
+    store.getState().registerEventHandlers('stale-tab', { click: vi.fn() });
+
+    const root = { querySelector: vi.fn().mockReturnValue(null) } as unknown as Document;
+    const api = createFrnlFrontendApi(store, {
+      measurementAdapter: createFrnlDomMeasurementAdapter({ root }),
+    });
+    const snap = api.inspectComponent('stale-tab');
+    expect(snap.rendered).toBe(true);
+    expect(snap.controls.click.available).toBe(true);
+    expect(snap.realized).toEqual({ mounted: false, visible: false });
+    api.dispose();
+
+    const unknownMeasurement = createFrnlFrontendApi(store, {
+      measurementAdapter: { measure: () => undefined },
+    });
+    expect(unknownMeasurement.inspectComponent('stale-tab').realized).toEqual({
+      mounted: false,
+      visible: false,
+    });
+    unknownMeasurement.dispose();
+  });
+
+  it('distinguishes offscreen layout from mounted, CSS-visible elements', () => {
+    const style = {
+      display: 'block', visibility: 'visible', opacity: '1',
+      position: 'static', overflowX: 'visible', overflowY: 'visible',
+    };
+    let x = 1200;
+    const element = {
+      localName: 'button',
+      getBoundingClientRect: () => ({ x, y: 20, width: 100, height: 40 }),
+      checkVisibility: () => true,
+      ownerDocument: {
+        defaultView: {
+          innerWidth: 800, innerHeight: 600,
+          getComputedStyle: () => style,
+        },
+      },
+    };
+    const root = { querySelector: vi.fn().mockReturnValue(element) } as unknown as Document;
+    const adapter = createFrnlDomMeasurementAdapter({ root });
+    expect(adapter.measure('outside')).toMatchObject({
+      mounted: true, visible: true, inViewport: false,
+      geometry: { x: 1200, y: 20, width: 100, height: 40 },
+    });
+    x = 350;
+    expect(adapter.measure('inside')).toMatchObject({
+      mounted: true, visible: true, inViewport: true,
+    });
+    expect(root.querySelector).toHaveBeenCalledWith(expect.stringContaining('data-frnl-component'));
+  });
+});
